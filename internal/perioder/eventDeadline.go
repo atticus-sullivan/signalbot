@@ -14,7 +14,7 @@ type ReocEventImplDeadline[T any] struct {
 func NewReocEventImplDeadline[T any](start time.Time, interval time.Duration, stop time.Time, desc string, meta T, foo func(time.Time, ReocEvent[T])) *ReocEventImplDeadline[T] {
 	e := ReocEventImplDeadline[T]{
 		ReocEventImpl: *NewReocEventImpl(start, interval, desc, meta, foo),
-		Stop:          stop,
+		Stop:          stop.UTC(),
 	}
 	return &e
 }
@@ -34,5 +34,5 @@ func (event *ReocEventImplDeadline[T]) RunAsync(ctx context.Context) (context.Co
 	return c, cFun
 }
 func (r ReocEventImplDeadline[T]) String() string {
-	return fmt.Sprintf("{start: %v, stop: %v, int: %v, desc: %v}", r.Start, r.Stop, r.Interval, r.Description)
+	return fmt.Sprintf("{start: %v, stop: %v, int: %v, desc: %v}", r.Start.Format(time.RFC3339), r.Stop.Format(time.RFC3339), r.Interval, r.Description)
 }

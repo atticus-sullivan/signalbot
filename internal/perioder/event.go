@@ -24,7 +24,7 @@ type ReocEventImpl[T any] struct {
 
 func NewReocEventImpl[T any](start time.Time, interval time.Duration, desc string, meta T, foo func(time.Time, ReocEvent[T])) *ReocEventImpl[T] {
 	e := ReocEventImpl[T]{
-		Start:          start,
+		Start:          start.UTC(),
 		Interval:       interval,
 		Description:    desc,
 		Metadata_store: meta,
@@ -97,5 +97,5 @@ func (event *ReocEventImpl[T]) Metadata() T {
 }
 func (r ReocEventImpl[T]) String() string {
 	// return fmt.Sprintf("{id: %v, start: %v, int: %v, desc: %v}", r.Id, r.Start, r.Interval, r.Description)
-	return fmt.Sprintf("{start: %v, int: %v, desc: %v}", r.Start, r.Interval, r.Description)
+	return fmt.Sprintf("{start: %v, int: %v, desc: %v}", r.Start.Format(time.RFC3339), r.Interval, r.Description)
 }
