@@ -11,24 +11,24 @@ import (
 
 type ReocEventImpl[T any] struct {
 	// Id          uint // TODO should it be this way or should the event know its ID?
-	Description  string `yaml:"desc"`
-	Foo          func(time.Time, ReocEvent[T]) `yaml:"-"`
-	Metadata_store     T `yaml:"meta"` // This is ONLY public so that yaml can see this member. Do not modify! Can be used for reconstructing Foo after (de)serialization
-	Start        time.Time `yaml:"start"`
-	Interval     time.Duration `yaml:"interval"`
-	Log          *slog.Logger `yaml:"-"`
-	checkStopped func() bool `yaml:"-"`
+	Description    string                        `yaml:"desc"`
+	Foo            func(time.Time, ReocEvent[T]) `yaml:"-"`
+	Metadata_store T                             `yaml:"meta"` // This is ONLY public so that yaml can see this member. Do not modify! Can be used for reconstructing Foo after (de)serialization
+	Start          time.Time                     `yaml:"start"`
+	Interval       time.Duration                 `yaml:"interval"`
+	Log            *slog.Logger                  `yaml:"-"`
+	checkStopped   func() bool                   `yaml:"-"`
 	// should store context as well to be able to tell if the event was stopped with the context
 	cancel context.CancelFunc
 }
 
 func NewReocEventImpl[T any](start time.Time, interval time.Duration, desc string, meta T, foo func(time.Time, ReocEvent[T])) *ReocEventImpl[T] {
 	e := ReocEventImpl[T]{
-		Start:       start,
-		Interval:    interval,
-		Description: desc,
-		Metadata_store:    meta,
-		Foo:         foo,
+		Start:          start,
+		Interval:       interval,
+		Description:    desc,
+		Metadata_store: meta,
+		Foo:            foo,
 	}
 	if foo != nil {
 		e.Foo = foo
@@ -99,4 +99,3 @@ func (r ReocEventImpl[T]) String() string {
 	// return fmt.Sprintf("{id: %v, start: %v, int: %v, desc: %v}", r.Id, r.Start, r.Interval, r.Description)
 	return fmt.Sprintf("{start: %v, int: %v, desc: %v}", r.Start, r.Interval, r.Description)
 }
-

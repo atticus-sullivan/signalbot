@@ -8,7 +8,7 @@ import (
 
 type ReocEventImplDeadline[T any] struct {
 	ReocEventImpl[T] `yaml:",inline"`
-	Stop time.Time `yaml:"stop"`
+	Stop             time.Time `yaml:"stop"`
 }
 
 func NewReocEventImplDeadline[T any](start time.Time, interval time.Duration, stop time.Time, desc string, meta T, foo func(time.Time, ReocEvent[T])) *ReocEventImplDeadline[T] {

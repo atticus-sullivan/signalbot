@@ -137,7 +137,7 @@ func (p *Periodic) Start(virtRcv func(*signaldbus.Message)) error {
 
 	// read saved events
 	f, err := os.Open(filepath.Join(p.ConfigDir, "events.yaml"))
-	if !os.IsNotExist(err){
+	if !os.IsNotExist(err) {
 		if err != nil {
 			// p.Log.Error(fmt.Sprintf("periodic module: Error opening 'events.yaml': %v", err))
 			return err
@@ -150,7 +150,7 @@ func (p *Periodic) Start(virtRcv func(*signaldbus.Message)) error {
 			return err
 		}
 		// add events
-		for _,v := range events {
+		for _, v := range events {
 			v.Foo = func(time time.Time, event perioder.ReocEvent[signaldbus.Message]) {
 				meta := event.Metadata()
 				virtRcv(&meta)
@@ -201,15 +201,15 @@ func (p *Periodic) Add(add *addArgs, m signaldbus.Message, signal signalsender.S
 		add.Desc = m.Message
 	}
 	var event perioder.ReocEvent[signaldbus.Message]
-	if add.Until.IsZero(){
+	if add.Until.IsZero() {
 		event = perioder.NewReocEventImpl(add.Start, add.Every, add.Desc, m, func(time time.Time, event perioder.ReocEvent[signaldbus.Message]) {
-				meta := event.Metadata()
-				virtRcv(&meta)
+			meta := event.Metadata()
+			virtRcv(&meta)
 		})
 	} else {
 		event = perioder.NewReocEventImplDeadline(add.Start, add.Every, add.Until, add.Desc, m, func(time time.Time, event perioder.ReocEvent[signaldbus.Message]) {
-				meta := event.Metadata()
-				virtRcv(&meta)
+			meta := event.Metadata()
+			virtRcv(&meta)
 		})
 	}
 	p.perioder.Add(event)

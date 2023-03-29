@@ -60,7 +60,7 @@ func main() {
 	if err := s.Start(); err != nil {
 		panic(err)
 	}
-	time.Sleep(time.Minute*1)
+	time.Sleep(time.Minute * 1)
 	wait := make(chan interface{})
 	<-wait
 	fmt.Println("closing")
