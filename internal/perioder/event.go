@@ -11,11 +11,11 @@ import (
 
 type ReocEventImpl[T any] struct {
 	// Id          uint // TODO should it be this way or should the event know its ID?
-	Description  string
-	Foo          func(time.Time)
-	metadata     *T // can be used for reconstructing Foo after (de)serialization
-	Start        time.Time
-	Interval     time.Duration
+	Description  string `yaml:"desc"`
+	Foo          func(time.Time) `yaml:"-"`
+	Metadata_store     *T `yaml:"meta"` // can be used for reconstructing Foo after (de)serialization
+	Start        time.Time `yaml:"start"`
+	Interval     time.Duration `yaml:"interval"`
 	Log          *slog.Logger
 	checkStopped func() bool
 	// should store context as well to be able to tell if the event was stopped with the context
@@ -27,7 +27,7 @@ func NewReocEventImpl[T any](start time.Time, interval time.Duration, desc strin
 		Start:       start,
 		Interval:    interval,
 		Description: desc,
-		metadata:    meta,
+		Metadata_store:    meta,
 		Foo:         foo,
 	}
 	if foo != nil {
@@ -93,7 +93,7 @@ func (event *ReocEventImpl[T]) SetLog(log *slog.Logger) {
 	event.Log = log
 }
 func (event *ReocEventImpl[T]) Metadata() *T {
-	return event.metadata
+	return event.Metadata_store
 }
 func (r ReocEventImpl[T]) String() string {
 	// return fmt.Sprintf("{id: %v, start: %v, int: %v, desc: %v}", r.Id, r.Start, r.Interval, r.Description)

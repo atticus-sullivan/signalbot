@@ -74,9 +74,9 @@ func (s *Account) AddReceiptHandlerFunc(handler func(*Receipt)) error {
 // The sync message is received when the user sends a message from a linked
 // device.
 type SyncMessage struct {
-	Message
+	Message `yaml:",inline"`
 	// DBus code for destination
-	Destination string
+	Destination string `yaml:"dst"`
 }
 
 func (m *SyncMessage) String() string {
@@ -96,26 +96,26 @@ func (m *SyncMessage) String() string {
 type Receipt struct {
 	// Integer value that can be used to associate this e.g. with a
 	// sendMessage()
-	Timestamp int64
+	Timestamp int64 `yaml:"ts"`
 	// Phone number of the sender
-	Sender string
+	Sender string `yaml:"sender"`
 }
 
 // This signal is received whenever we get a private message or a message is
 // posted in a group we are an active member.
 type Message struct {
 	// Integer value that is used by the system to send a ReceiptReceived reply
-	Timestamp int64
+	Timestamp int64 `yaml:"ts"`
 	// Phone number of the sender
-	Sender string
+	Sender string `yaml:"sender"`
 	// Byte array representing the internal group identifier (empty when
 	// private message)
-	GroupId []byte
+	GroupId []byte `yaml:"gid,flow"`
 	// Message text
-	Message string
+	Message string `yaml:"msg"`
 	// String array of filenames in the signal-cli storage
 	// (~/.local/share/signal-cli/attachments/)
-	Attachments []string
+	Attachments []string `yaml:"att,flow"`
 }
 
 func (m *Message) String() string {
