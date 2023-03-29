@@ -55,7 +55,7 @@ func (event *ReocEventImpl[T]) RunAsync(ctx context.Context) (context.Context, c
 // this in a type embedding this one
 func (event *ReocEventImpl[T]) run(ctx context.Context) {
 	event.checkStopped = func() bool {
-		return ctx.Err() == nil
+		return ctx.Err() != nil
 	}
 	// calculate how long until the event occurs the next time
 	start_in := time.Until(event.Start)

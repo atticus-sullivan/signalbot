@@ -85,9 +85,9 @@ func (p *PerioderImpl[T]) Events() map[uint]ReocEvent[T] {
 
 	r := make(map[uint]ReocEvent[T], len(p.events))
 	for id, event := range p.events {
-		// if !event.Stopped() {
-		r[id] = event
-		// }
+		if !event.Stopped() {
+			r[id] = event
+		}
 	}
 	return r
 }
