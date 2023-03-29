@@ -8,9 +8,11 @@ import (
 // configuration of a signalServer. Can be parsed by yaml
 // TODO note on concurrency
 type SignalServerCfg struct {
-	Dbus     signaldbus.DbusType   `yaml:"dbus"`
-	Access   AccesscontrolUser     `yaml:"access"`
-	Handlers map[string]HandlerCfg `yaml:"handlers"` // maps name to prefix
+	Dbus           signaldbus.DbusType   `yaml:"dbus"`
+	PortSendMsg    uint16                `yaml:"portSendMsg"`
+	PortVirtRcvMsg uint16                `yaml:"portVirtRcvMsg"`
+	Access         AccesscontrolUser     `yaml:"access"`
+	Handlers       map[string]HandlerCfg `yaml:"handlers"` // maps name to prefix
 
 	// just to have a place where to define anchors to alias to laster
 	Chats []string `yaml:"chats"`

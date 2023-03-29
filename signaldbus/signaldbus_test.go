@@ -24,11 +24,12 @@ func TestGetContactName(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	name, err := acc.GetContactName(
 		d.Numbers[0],
@@ -62,11 +63,12 @@ func TestGetContactNumber(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	numbers, err := acc.GetContactNumber(
 		d.Name,
@@ -98,11 +100,12 @@ func TestGetSelfNumber(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	number, err := acc.GetSelfNumber()
 	if err != nil {
@@ -130,11 +133,12 @@ func TestIsContactBlocked(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	blocked, err := acc.IsContactBlocked(
 		d.Numbers[0],
@@ -166,11 +170,12 @@ func TestIsRegistered(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	result, err := acc.IsRegistered()
 	if err != nil {
@@ -198,11 +203,12 @@ func TestIsRegistered_num(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	result, err := acc.IsRegistered_num(
 		d.Numbers[0],
@@ -236,11 +242,12 @@ func TestIsRegistered_nums(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	results, err := acc.IsRegistered_nums(
 		d.Numbers,
@@ -273,11 +280,12 @@ func TestListNumbers(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	numbers, err := acc.ListNumbers()
 	if err != nil {
@@ -303,11 +311,12 @@ func TestRemovePin(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	err = acc.RemovePin()
 	if err != nil {
@@ -334,11 +343,12 @@ func TestSendEndSessionMessage(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	err = acc.SendEndSessionMessage(
 		d.Recipients,
@@ -374,11 +384,12 @@ func TestSendMessage(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	timestamp, err := acc.SendMessage(
 		d.Message,
@@ -423,11 +434,12 @@ func TestSendMessage_multi(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	timestamp, err := acc.SendMessage_multi(
 		d.Message,
@@ -473,11 +485,12 @@ func TestSendMessageReaction(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	timestamp, err := acc.SendMessageReaction(
 		d.Emoji,
@@ -531,11 +544,12 @@ func TestSendMessageReaction_multi(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	timestamp, err := acc.SendMessageReaction_multi(
 		d.Emoji,
@@ -591,11 +605,12 @@ func TestSendMessageReaction_multi(t *testing.T) {
 // 	}
 // 	defer conn.Close()
 //
-// 	acc, err := signaldbus.NewAccount(signaldbus.SessionBus, false)
+// 	acc, err := signaldbus.NewAccount(signaldbus.SessionBus
 // 	if err != nil {
 // 		panic(err)
 // 	}
 // 	defer acc.Close()
+// acc.ListenForSignals()
 //
 // 	timestamp, err := acc.SendPaymentNotification(
 // 		d.Receipt,
@@ -640,11 +655,12 @@ func TestSendNoteToSelfMessage(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	timestamp, err := acc.SendNoteToSelfMessage(
 		d.Message,
@@ -683,11 +699,12 @@ func TestSendReadReceipt(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	err = acc.SendReadReceipt(
 		d.Recipients[0],
@@ -726,11 +743,12 @@ func TestSendViewedReceipt(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	err = acc.SendViewedReceipt(
 		d.Recipients[0],
@@ -770,11 +788,12 @@ func TestSendRemoteDeleteMessage(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	timestamp, err := acc.SendRemoteDeleteMessage(
 		d.TargetSentTimestamps[0],
@@ -814,11 +833,12 @@ func TestSendRemoteDeleteMessage_multi(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	timestamp, err := acc.SendRemoteDeleteMessage_multi(
 		d.TargetSentTimestamps[0],
@@ -857,11 +877,12 @@ func TestSendTyping(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	err = acc.SendTyping(
 		d.Recipients[0],
@@ -900,11 +921,12 @@ func TestSetContactBlocked(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	err = acc.SetContactBlocked(
 		d.Numbers[0],
@@ -943,11 +965,12 @@ func TestSetContactName(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	err = acc.SetContactName(
 		d.Numbers[0],
@@ -985,11 +1008,12 @@ func TestDeleteContact(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	err = acc.DeleteContact(
 		d.Numbers[0],
@@ -1022,11 +1046,12 @@ func TestDeleteRecipient(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	err = acc.DeleteRecipient(
 		d.Numbers[0],
@@ -1060,11 +1085,12 @@ func TestSetExpirationTimer(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	err = acc.SetExpirationTimer(
 		d.Numbers[0],
@@ -1102,11 +1128,12 @@ func TestSetPin(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	err = acc.SetPin(
 		d.Pin,
@@ -1140,11 +1167,12 @@ func TestSubmitRateLimitChallenge(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	err = acc.SubmitRateLimitChallenge(
 		d.Challenge,
@@ -1186,11 +1214,12 @@ func TestUpdateProfile(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	err = acc.UpdateProfile(
 		d.Name,
@@ -1248,11 +1277,12 @@ func TestUpdateProfile_firstLastName(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	err = acc.UpdateProfile_firstLastName(
 		d.GivenName,
@@ -1311,11 +1341,12 @@ func TestUploadStickerPack(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	url, err := acc.UploadStickerPack(
 		d.StickerPackPath,
@@ -1348,11 +1379,12 @@ func TestVersion(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	version, err := acc.Version()
 	if err != nil {
@@ -1382,11 +1414,12 @@ func TestCreateGroup(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	groupId, err := acc.CreateGroup(
 		d.GroupName,
@@ -1430,11 +1463,12 @@ func TestCreateGroup(t *testing.T) {
 // 	}
 // 	defer conn.Close()
 //
-// 	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+// 	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 // 	if err != nil {
 // 		panic(err)
 // 	}
 // 	defer acc.Close()
+// acc.ListenForSignals()
 //
 // 	objectPath, err := acc.GetGroup(
 // 	d.GroupId,
@@ -1468,11 +1502,12 @@ func TestGetGroupName(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	name, err := acc.GetGroupName(
 		d.GroupId,
@@ -1506,11 +1541,12 @@ func TestGetGroupMembers(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	members, err := acc.GetGroupMembers(
 		d.GroupId,
@@ -1543,11 +1579,12 @@ func TestJoinGroup(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	err = acc.JoinGroup(
 		d.InviteURI,
@@ -1583,11 +1620,12 @@ func TestSendGroupMessage(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	timestamp, err := acc.SendGroupMessage(
 		d.Message,
@@ -1631,11 +1669,12 @@ func TestSendGroupTyping(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	err = acc.SendGroupTyping(
 		d.GroupId,
@@ -1678,11 +1717,12 @@ func TestSendGroupMessageReaction(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	timestamp, err := acc.SendGroupMessageReaction(
 		d.Emoji,
@@ -1737,11 +1777,12 @@ func TestSendGroupRemoteDeleteMessage(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
+	acc.ListenForSignals()
 
 	timestamp, err := acc.SendGroupRemoteDeleteMessage(
 		d.TargetSentTimestamps[0],
@@ -1778,19 +1819,17 @@ func TestMessageReceived(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
 
-	sync := make(chan int)
 	testChan := make(chan *signaldbus.Message)
 	acc.AddMessageHandlerFunc(func(m *signaldbus.Message) {
 		testChan <- m
 	})
-	go acc.ListenForSignalsWithSync(sync)
-	<-sync
+	acc.ListenForSignals()
 
 	message_should := signaldbus.Message{
 		Timestamp:   1234,
@@ -1836,19 +1875,17 @@ func TestSyncMessageReceived(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
 
-	sync := make(chan int)
 	testChan := make(chan *signaldbus.SyncMessage)
 	acc.AddSyncMessageHandlerFunc(func(m *signaldbus.SyncMessage) {
 		testChan <- m
 	})
-	go acc.ListenForSignalsWithSync(sync)
-	<-sync
+	acc.ListenForSignals()
 
 	message_should := signaldbus.SyncMessage{
 		Message: signaldbus.Message{
@@ -1900,19 +1937,17 @@ func TestReceiptReceived(t *testing.T) {
 	}
 	defer conn.Close()
 
-	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus, false)
+	acc, err := signaldbus.NewAccount(log, signaldbus.SessionBus)
 	if err != nil {
 		panic(err)
 	}
 	defer acc.Close()
 
-	sync := make(chan int)
 	testChan := make(chan *signaldbus.Receipt)
 	acc.AddReceiptHandlerFunc(func(m *signaldbus.Receipt) {
 		testChan <- m
 	})
-	go acc.ListenForSignalsWithSync(sync)
-	<-sync
+	acc.ListenForSignals()
 
 	message_should := signaldbus.Receipt{
 		Timestamp: 1234,

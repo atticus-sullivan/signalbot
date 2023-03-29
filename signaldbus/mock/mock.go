@@ -36,7 +36,7 @@ type Dbus_api struct {
 	TargetAuthor         string
 	TargetSentTimestamps []int64
 	Timestamp            int64
-	Version_              string
+	Version_             string
 	Url                  string
 }
 
@@ -58,7 +58,7 @@ func (s *Dbus_api) GetSelfNumber() (string, *dbus.Error) {
 	Args = []any{}
 	return s.Number_self, nil
 }
-func (s *Dbus_api) IsContactBlocked( number string,) (bool, *dbus.Error) {
+func (s *Dbus_api) IsContactBlocked(number string) (bool, *dbus.Error) {
 	Args = []any{
 		number,
 	}
@@ -69,14 +69,14 @@ func (s *Dbus_api) IsRegistered() (bool, *dbus.Error) {
 	return s.Result, nil
 }
 
-func (s *Dbus_api) IsRegistered_num( number string,) (bool, *dbus.Error) {
+func (s *Dbus_api) IsRegistered_num(number string) (bool, *dbus.Error) {
 	Args = []any{
 		number,
 	}
 	return s.Result, nil
 }
 
-func (s *Dbus_api) IsRegistered_nums( numbers []string,) ([]bool, *dbus.Error) {
+func (s *Dbus_api) IsRegistered_nums(numbers []string) ([]bool, *dbus.Error) {
 	Args = []any{
 		numbers,
 	}
@@ -91,13 +91,13 @@ func (s *Dbus_api) RemovePin() *dbus.Error {
 	Args = []any{}
 	return nil
 }
-func (s *Dbus_api) SendEndSessionMessage( recipients []string,) *dbus.Error {
+func (s *Dbus_api) SendEndSessionMessage(recipients []string) *dbus.Error {
 	Args = []any{
 		recipients,
 	}
 	return nil
 }
-func (s *Dbus_api) SendMessage( message string, attachments []string, recipient string,) (int64, *dbus.Error) {
+func (s *Dbus_api) SendMessage(message string, attachments []string, recipient string) (int64, *dbus.Error) {
 	Args = []any{
 		message,
 		attachments,
@@ -106,7 +106,7 @@ func (s *Dbus_api) SendMessage( message string, attachments []string, recipient 
 	return s.Timestamp, nil
 }
 
-func (s *Dbus_api) SendMessage_multi( message string, attachments []string, recipients []string,) (int64, *dbus.Error) {
+func (s *Dbus_api) SendMessage_multi(message string, attachments []string, recipients []string) (int64, *dbus.Error) {
 	Args = []any{
 		message,
 		attachments,
@@ -115,7 +115,7 @@ func (s *Dbus_api) SendMessage_multi( message string, attachments []string, reci
 	return s.Timestamp, nil
 }
 
-func (s *Dbus_api) SendMessageReaction( emoji string, remove bool, targetAuthor string, targetSentTimestamp int64, recipient string,) (int64, *dbus.Error) {
+func (s *Dbus_api) SendMessageReaction(emoji string, remove bool, targetAuthor string, targetSentTimestamp int64, recipient string) (int64, *dbus.Error) {
 	Args = []any{
 		emoji,
 		remove,
@@ -126,7 +126,7 @@ func (s *Dbus_api) SendMessageReaction( emoji string, remove bool, targetAuthor 
 	return s.Timestamp, nil
 }
 
-func (s *Dbus_api) SendMessageReaction_multi( emoji string, remove bool, targetAuthor string, targetSentTimestamp int64, recipients []string,) (int64, *dbus.Error) {
+func (s *Dbus_api) SendMessageReaction_multi(emoji string, remove bool, targetAuthor string, targetSentTimestamp int64, recipients []string) (int64, *dbus.Error) {
 	Args = []any{
 		emoji,
 		remove,
@@ -146,28 +146,28 @@ func (s *Dbus_api) SendMessageReaction_multi( emoji string, remove bool, targetA
 // 	return s.timestamp, nil
 // }
 
-func (s *Dbus_api) SendNoteToSelfMessage( message string, attachments []string,) (int64, *dbus.Error) {
+func (s *Dbus_api) SendNoteToSelfMessage(message string, attachments []string) (int64, *dbus.Error) {
 	Args = []any{
 		message,
 		attachments,
 	}
 	return s.Timestamp, nil
 }
-func (s *Dbus_api) SendReadReceipt( recipient string, targetSentTimestamps []int64,) *dbus.Error {
+func (s *Dbus_api) SendReadReceipt(recipient string, targetSentTimestamps []int64) *dbus.Error {
 	Args = []any{
 		recipient,
 		targetSentTimestamps,
 	}
 	return nil
 }
-func (s *Dbus_api) SendViewedReceipt( recipient string, targetSentTimestamp []int64,) *dbus.Error {
+func (s *Dbus_api) SendViewedReceipt(recipient string, targetSentTimestamp []int64) *dbus.Error {
 	Args = []any{
 		recipient,
 		targetSentTimestamp,
 	}
 	return nil
 }
-func (s *Dbus_api) SendRemoteDeleteMessage( targetSentTimestamp int64, recipient string,) (int64, *dbus.Error) {
+func (s *Dbus_api) SendRemoteDeleteMessage(targetSentTimestamp int64, recipient string) (int64, *dbus.Error) {
 	Args = []any{
 		targetSentTimestamp,
 		recipient,
@@ -175,7 +175,7 @@ func (s *Dbus_api) SendRemoteDeleteMessage( targetSentTimestamp int64, recipient
 	return s.Timestamp, nil
 }
 
-func (s *Dbus_api) SendRemoteDeleteMessage_multi( targetSentTimestamp int64, recipients []string,) (int64, *dbus.Error) {
+func (s *Dbus_api) SendRemoteDeleteMessage_multi(targetSentTimestamp int64, recipients []string) (int64, *dbus.Error) {
 	Args = []any{
 		targetSentTimestamp,
 		recipients,
@@ -183,60 +183,60 @@ func (s *Dbus_api) SendRemoteDeleteMessage_multi( targetSentTimestamp int64, rec
 	return s.Timestamp, nil
 }
 
-func (s *Dbus_api) SendTyping( recipient string, stop bool,) *dbus.Error {
+func (s *Dbus_api) SendTyping(recipient string, stop bool) *dbus.Error {
 	Args = []any{
 		recipient,
 		stop,
 	}
 	return nil
 }
-func (s *Dbus_api) SetContactBlocked( number string, block bool,) *dbus.Error {
+func (s *Dbus_api) SetContactBlocked(number string, block bool) *dbus.Error {
 	Args = []any{
 		number,
 		block,
 	}
 	return nil
 }
-func (s *Dbus_api) SetContactName( number string, name string,) *dbus.Error {
+func (s *Dbus_api) SetContactName(number string, name string) *dbus.Error {
 	Args = []any{
 		number,
 		name,
 	}
 	return nil
 }
-func (s *Dbus_api) DeleteContact( number string,) *dbus.Error {
+func (s *Dbus_api) DeleteContact(number string) *dbus.Error {
 	Args = []any{
 		number,
 	}
 	return nil
 }
-func (s *Dbus_api) DeleteRecipient( number string,) *dbus.Error {
+func (s *Dbus_api) DeleteRecipient(number string) *dbus.Error {
 	Args = []any{
 		number,
 	}
 	return nil
 }
-func (s *Dbus_api) SetExpirationTimer( number string, expiration int32,) *dbus.Error {
+func (s *Dbus_api) SetExpirationTimer(number string, expiration int32) *dbus.Error {
 	Args = []any{
 		number,
 		expiration,
 	}
 	return nil
 }
-func (s *Dbus_api) SetPin( pin string,) *dbus.Error {
+func (s *Dbus_api) SetPin(pin string) *dbus.Error {
 	Args = []any{
 		pin,
 	}
 	return nil
 }
-func (s *Dbus_api) SubmitRateLimitChallenge( challenge string, captcha string,) *dbus.Error {
+func (s *Dbus_api) SubmitRateLimitChallenge(challenge string, captcha string) *dbus.Error {
 	Args = []any{
 		challenge,
 		captcha,
 	}
 	return nil
 }
-func (s *Dbus_api) UpdateProfile( name string, about string, aboutEmoji string, avatar string, remove bool,) *dbus.Error {
+func (s *Dbus_api) UpdateProfile(name string, about string, aboutEmoji string, avatar string, remove bool) *dbus.Error {
 	Args = []any{
 		name,
 		about,
@@ -247,7 +247,7 @@ func (s *Dbus_api) UpdateProfile( name string, about string, aboutEmoji string, 
 	return nil
 }
 
-func (s *Dbus_api) UpdateProfile_firstLastName( givenName string, familyName string, about string, aboutEmoji string, avatar string, remove bool,) *dbus.Error {
+func (s *Dbus_api) UpdateProfile_firstLastName(givenName string, familyName string, about string, aboutEmoji string, avatar string, remove bool) *dbus.Error {
 	Args = []any{
 		givenName,
 		familyName,
@@ -259,7 +259,7 @@ func (s *Dbus_api) UpdateProfile_firstLastName( givenName string, familyName str
 	return nil
 }
 
-func (s *Dbus_api) UploadStickerPack( stickerPackPath string,) (string, *dbus.Error) {
+func (s *Dbus_api) UploadStickerPack(stickerPackPath string) (string, *dbus.Error) {
 	Args = []any{
 		stickerPackPath,
 	}
@@ -269,7 +269,7 @@ func (s *Dbus_api) Version() (string, *dbus.Error) {
 	Args = []any{}
 	return s.Version_, nil
 }
-func (s *Dbus_api) CreateGroup( groupName string, members []string, avatar string,) ([]byte, *dbus.Error) {
+func (s *Dbus_api) CreateGroup(groupName string, members []string, avatar string) ([]byte, *dbus.Error) {
 	Args = []any{
 		groupName,
 		members,
@@ -285,25 +285,25 @@ func (s *Dbus_api) CreateGroup( groupName string, members []string, avatar strin
 //		return s.objectPath, nil
 //	}
 
-func (s *Dbus_api) GetGroupName( groupId []byte,) (string, *dbus.Error) {
+func (s *Dbus_api) GetGroupName(groupId []byte) (string, *dbus.Error) {
 	Args = []any{
 		groupId,
 	}
 	return s.Name, nil
 }
-func (s *Dbus_api) GetGroupMembers( groupId []byte,) ([]string, *dbus.Error) {
+func (s *Dbus_api) GetGroupMembers(groupId []byte) ([]string, *dbus.Error) {
 	Args = []any{
 		groupId,
 	}
 	return s.Members, nil
 }
-func (s *Dbus_api) JoinGroup( inviteURI string,) *dbus.Error {
+func (s *Dbus_api) JoinGroup(inviteURI string) *dbus.Error {
 	Args = []any{
 		inviteURI,
 	}
 	return nil
 }
-func (s *Dbus_api) SendGroupMessage( message string, attachments []string, groupId []byte,) (int64, *dbus.Error) {
+func (s *Dbus_api) SendGroupMessage(message string, attachments []string, groupId []byte) (int64, *dbus.Error) {
 	Args = []any{
 		message,
 		attachments,
@@ -311,14 +311,14 @@ func (s *Dbus_api) SendGroupMessage( message string, attachments []string, group
 	}
 	return s.Timestamp, nil
 }
-func (s *Dbus_api) SendGroupTyping( groupId []byte, stop bool,) *dbus.Error {
+func (s *Dbus_api) SendGroupTyping(groupId []byte, stop bool) *dbus.Error {
 	Args = []any{
 		groupId,
 		stop,
 	}
 	return nil
 }
-func (s *Dbus_api) SendGroupMessageReaction( emoji string, remove bool, targetAuthor string, targetSentTimestamp int64, groupId []byte,) (int64, *dbus.Error) {
+func (s *Dbus_api) SendGroupMessageReaction(emoji string, remove bool, targetAuthor string, targetSentTimestamp int64, groupId []byte) (int64, *dbus.Error) {
 	Args = []any{
 		emoji,
 		remove,
@@ -328,7 +328,7 @@ func (s *Dbus_api) SendGroupMessageReaction( emoji string, remove bool, targetAu
 	}
 	return s.Timestamp, nil
 }
-func (s *Dbus_api) SendGroupRemoteDeleteMessage( targetSentTimestamp int64, groupId []byte,) (int64, *dbus.Error) {
+func (s *Dbus_api) SendGroupRemoteDeleteMessage(targetSentTimestamp int64, groupId []byte) (int64, *dbus.Error) {
 	Args = []any{
 		targetSentTimestamp,
 		groupId,
@@ -337,47 +337,47 @@ func (s *Dbus_api) SendGroupRemoteDeleteMessage( targetSentTimestamp int64, grou
 }
 
 var func_map = map[string]string{
-		"GetContactName":            "getContactName",
-		"GetContactNumber":          "getContactNumber",
-		"GetSelfNumber":             "getSelfNumber",
-		"IsContactBlocked":          "isContactBlocked",
-		"IsRegistered":              "isRegistered",
-		"IsRegistered_num":          "isRegistered",
-		"IsRegistered_nums":         "isRegistered",
-		"ListNumbers":               "listNumbers",
-		"RemovePin":                 "removePin",
-		"SendEndSessionMessage":     "sendEndSessionMessage",
-		"SendMessage":               "sendMessage",
-		"SendMessage_multi":         "sendMessage",
-		"SendMessageReaction":       "sendMessageReaction",
-		"SendMessageReaction_multi": "sendMessageReaction",
-		// "SendPaymentNotification":       "sendPaymentNotification",
-		"SendNoteToSelfMessage":         "sendNoteToSelfMessage",
-		"SendReadReceipt":               "sendReadReceipt",
-		"SendViewedReceipt":             "sendViewedReceipt",
-		"SendRemoteDeleteMessage":       "sendRemoteDeleteMessage",
-		"SendRemoteDeleteMessage_multi": "sendRemoteDeleteMessage",
-		"SendTyping":                    "sendTyping",
-		"SetContactBlocked":             "setContactBlocked",
-		"SetContactName":                "setContactName",
-		"DeleteContact":                 "deleteContact",
-		"DeleteRecipient":               "deleteRecipient",
-		"SetExpirationTimer":            "setExpirationTimer",
-		"SetPin":                        "setPin",
-		"SubmitRateLimitChallenge":      "submitRateLimitChallenge",
-		"UpdateProfile":                 "updateProfile",
-		"UpdateProfile_firstLastName":   "updateProfile",
-		"UploadStickerPack":             "uploadStickerPack",
-		"Version":                       "version",
-		"CreateGroup":                   "createGroup",
-		// "GetGroup":                      "getGroup",
-		"GetGroupMembers":              "getGroupMembers",
-		"GetGroupName":                 "getGroupName",
-		"JoinGroup":                    "joinGroup",
-		"SendGroupMessage":             "sendGroupMessage",
-		"SendGroupTyping":              "sendGroupTyping",
-		"SendGroupMessageReaction":     "sendGroupMessageReaction",
-		"SendGroupRemoteDeleteMessage": "sendGroupRemoteDeleteMessage",
+	"GetContactName":            "getContactName",
+	"GetContactNumber":          "getContactNumber",
+	"GetSelfNumber":             "getSelfNumber",
+	"IsContactBlocked":          "isContactBlocked",
+	"IsRegistered":              "isRegistered",
+	"IsRegistered_num":          "isRegistered",
+	"IsRegistered_nums":         "isRegistered",
+	"ListNumbers":               "listNumbers",
+	"RemovePin":                 "removePin",
+	"SendEndSessionMessage":     "sendEndSessionMessage",
+	"SendMessage":               "sendMessage",
+	"SendMessage_multi":         "sendMessage",
+	"SendMessageReaction":       "sendMessageReaction",
+	"SendMessageReaction_multi": "sendMessageReaction",
+	// "SendPaymentNotification":       "sendPaymentNotification",
+	"SendNoteToSelfMessage":         "sendNoteToSelfMessage",
+	"SendReadReceipt":               "sendReadReceipt",
+	"SendViewedReceipt":             "sendViewedReceipt",
+	"SendRemoteDeleteMessage":       "sendRemoteDeleteMessage",
+	"SendRemoteDeleteMessage_multi": "sendRemoteDeleteMessage",
+	"SendTyping":                    "sendTyping",
+	"SetContactBlocked":             "setContactBlocked",
+	"SetContactName":                "setContactName",
+	"DeleteContact":                 "deleteContact",
+	"DeleteRecipient":               "deleteRecipient",
+	"SetExpirationTimer":            "setExpirationTimer",
+	"SetPin":                        "setPin",
+	"SubmitRateLimitChallenge":      "submitRateLimitChallenge",
+	"UpdateProfile":                 "updateProfile",
+	"UpdateProfile_firstLastName":   "updateProfile",
+	"UploadStickerPack":             "uploadStickerPack",
+	"Version":                       "version",
+	"CreateGroup":                   "createGroup",
+	// "GetGroup":                      "getGroup",
+	"GetGroupMembers":              "getGroupMembers",
+	"GetGroupName":                 "getGroupName",
+	"JoinGroup":                    "joinGroup",
+	"SendGroupMessage":             "sendGroupMessage",
+	"SendGroupTyping":              "sendGroupTyping",
+	"SendGroupMessageReaction":     "sendGroupMessageReaction",
+	"SendGroupRemoteDeleteMessage": "sendGroupRemoteDeleteMessage",
 }
 
 func Setup_dbus(s *Dbus_api, funcs []string, t *testing.T) (*dbus.Conn, error) {
@@ -387,8 +387,8 @@ func Setup_dbus(s *Dbus_api, funcs []string, t *testing.T) (*dbus.Conn, error) {
 	}
 
 	m := make(map[string]string)
-	for _,k := range funcs {
-		if v,ok := func_map[k]; !ok {
+	for _, k := range funcs {
+		if v, ok := func_map[k]; !ok {
 			t.Error(k, "no valid function")
 		} else {
 			m[k] = v

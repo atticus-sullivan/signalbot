@@ -2,21 +2,23 @@ package signalserver
 
 import (
 	"fmt"
-	"signalbot_go/signaldbus"
 	"signalbot_go/internal/signalsender"
+	"signalbot_go/signaldbus"
 	"strings"
 )
 
 // can handle a signal-message
 type Handler interface {
-	Handle(m *signaldbus.Message, signal signalsender.SignalSender)
+	Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message))
+	Start() error
+	Close()
 }
 
 // config for a handler. Can be parsed from yaml
 // TODO note on concurrency
 type HandlerCfg struct {
-	Prefixes []string               `yaml:"prefixes"`
-	Help     string                 `yaml:"help"`
+	Prefixes []string              `yaml:"prefixes"`
+	Help     string                `yaml:"help"`
 	Access   AccesscontrolUserChat `yaml:"access"`
 }
 

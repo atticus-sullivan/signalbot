@@ -54,7 +54,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	s.Start()
+	if err := s.Start(); err != nil {
+		panic(err)
+	}
 	wait := make(chan interface{})
 	<-wait
 }

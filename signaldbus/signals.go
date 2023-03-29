@@ -1,8 +1,10 @@
 package signaldbus
 
 import (
+	"bufio"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/godbus/dbus/v5"
@@ -23,11 +25,12 @@ func (f MessageHandlerFunc) handle(m *Message) {
 func (s *Account) AddMessageHandler(handler MessageHandler) {
 	s.messageHandlersChann <- &handler
 }
-func (s *Account) AddMessageHandlerFunc(handler func(*Message)) {
+func (s *Account) AddMessageHandlerFunc(handler func(*Message)) error {
 	if handler == nil {
-		panic("signal-cli: nil handler") // TODO error
+		return fmt.Errorf("signal-cli: trying to acc a nil message handler func")
 	}
 	s.AddMessageHandler(MessageHandlerFunc(handler))
+	return nil
 }
 
 type SyncMessageHandler interface {
@@ -41,11 +44,12 @@ func (f SyncMessageHandlerFunc) handle(m *SyncMessage) {
 func (s *Account) AddSyncMessageHandler(handler SyncMessageHandler) {
 	s.syncMessageHandlersChann <- &handler
 }
-func (s *Account) AddSyncMessageHandlerFunc(handler func(*SyncMessage)) {
+func (s *Account) AddSyncMessageHandlerFunc(handler func(*SyncMessage)) error {
 	if handler == nil {
-		panic("signal-cli: nil handler") // TODO error
+		return fmt.Errorf("signal-cli: trying to acc a nil sync message handler func")
 	}
 	s.AddSyncMessageHandler(SyncMessageHandlerFunc(handler))
+	return nil
 }
 
 type ReceiptHandler interface {
@@ -59,11 +63,12 @@ func (f ReceiptHandlerFunc) handle(m *Receipt) {
 func (s *Account) AddReceiptHandler(handler ReceiptHandler) {
 	s.receiptHandlersChann <- &handler
 }
-func (s *Account) AddReceiptHandlerFunc(handler func(*Receipt)) {
+func (s *Account) AddReceiptHandlerFunc(handler func(*Receipt)) error {
 	if handler == nil {
-		panic("signal-cli: nil handler") // TODO error
+		return fmt.Errorf("signal-cli: trying to acc a nil receipt handler func")
 	}
 	s.AddReceiptHandler(ReceiptHandlerFunc(handler))
+	return nil
 }
 
 // The sync message is received when the user sends a message from a linked
@@ -165,4 +170,38 @@ func NewMessage(v *dbus.Signal) *Message {
 		Attachments: v.Body[4].([]string),
 	}
 	return &msg
+}
+
+func NewMessageFromReader(r io.Reader) (*Message, error) {
+	rb := bufio.NewReader(r)
+	m := Message{}
+
+	gidB, err := rb.ReadBytes('\n')
+	if err != nil && err == io.EOF {
+		return nil, err
+	}
+	gidS := strings.TrimSpace(string(gidB))
+	gid, err := hex.DecodeString(gidS)
+	if err != nil && err == io.EOF {
+		return nil, err
+	}
+
+	source, err := rb.ReadBytes('\n')
+	if err != nil && err == io.EOF {
+		return nil, err
+	}
+
+	msg, err := rb.ReadBytes('\n')
+	if err != nil && err == io.EOF {
+		return nil, err
+	}
+
+	m.Message = strings.TrimSpace(string(msg))
+	if len(gidS) != 0 {
+		m.GroupId = gid
+	}
+	if len(source) != 0 {
+		m.Sender = strings.TrimSpace(string(source))
+	}
+	return &m, nil
 }

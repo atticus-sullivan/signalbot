@@ -2,15 +2,14 @@ package cmd_test
 
 import (
 	"fmt"
-	"signalbot_go/modules/cmd"
+	// "signalbot_go/modules/cmd"
 	"signalbot_go/signaldbus"
-
-	"golang.org/x/exp/slog"
 )
 
 type mock struct {
 }
-func (mock *mock) Respond(message string, attachments []string, m *signaldbus.Message) (timestamp int64, err error){
+
+func (mock *mock) Respond(message string, attachments []string, m *signaldbus.Message) (timestamp int64, err error) {
 	fmt.Println(message)
 	return 0, nil
 }

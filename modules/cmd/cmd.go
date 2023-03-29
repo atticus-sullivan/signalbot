@@ -13,10 +13,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// type Handler interface {
-//	Handle(m *signaldbus.Message, signal signalsender.SignalSender, sendError func(err error) bool)
-// }
-
 // module to execute scripts on the server and respond with the output from the stdout.
 // Create with NewCmd
 // TODO what about concurrency
@@ -33,7 +29,7 @@ type Cmd struct {
 // create a new cmd instance from a configuration.
 func NewCmd(log *slog.Logger, cfgDir string) (*Cmd, error) {
 	c := Cmd{
-		Log: log,
+		Log:       log,
 		ConfigDir: cfgDir,
 	}
 
@@ -41,6 +37,7 @@ func NewCmd(log *slog.Logger, cfgDir string) (*Cmd, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer f.Close()
 
 	d := yaml.NewDecoder(f)
 	d.KnownFields(true)
@@ -58,7 +55,7 @@ func NewCmd(log *slog.Logger, cfgDir string) (*Cmd, error) {
 
 // check if stored values are valid (for now only the read configuration mapping)
 func (c *Cmd) Validate() error {
-	for _,cmd := range c.Commands {
+	for _, cmd := range c.Commands {
 		if cmd == "" {
 			return fmt.Errorf("command cannot be empty")
 		}
@@ -70,8 +67,8 @@ func (c *Cmd) Validate() error {
 		if !stat.Mode().IsRegular() {
 			return fmt.Errorf("Command is not a regular file")
 		}
-		if stat.Mode() & 0111 == 0111 {
-			return fmt.Errorf("Command is not executable")
+		if stat.Mode().Perm()&0111 != 0111 {
+			return fmt.Errorf("Command is not executable, %d (file: %s)", stat.Mode().Perm(), filepath.Join(c.ConfigDir, cmd))
 		}
 	}
 	return nil
@@ -85,12 +82,12 @@ func (c *Cmd) sendError(m *signaldbus.Message, signal signalsender.SignalSender,
 }
 
 // handle a signalmessage
-func (c *Cmd) Handle(m *signaldbus.Message, signal signalsender.SignalSender) {
+func (c *Cmd) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
 	if cmds, ok := c.Commands[m.Message]; ok {
 		command := exec.Command(cmds)
 		command.Dir = c.ConfigDir
 
-		out,err := command.StdoutPipe()
+		out, err := command.StdoutPipe()
 		if err != nil {
 			errMsg := fmt.Sprintf("Error: %v", err)
 			c.Log.Error(errMsg)
@@ -105,7 +102,7 @@ func (c *Cmd) Handle(m *signaldbus.Message, signal signalsender.SignalSender) {
 			return
 		}
 
-		output,_ := io.ReadAll(out)
+		output, _ := io.ReadAll(out)
 
 		if err := command.Wait(); err != nil {
 			errMsg := fmt.Sprintf("Error: %v", err)
@@ -126,4 +123,11 @@ func (c *Cmd) Handle(m *signaldbus.Message, signal signalsender.SignalSender) {
 			c.Log.Error(fmt.Sprintf("Failed to send reply to %v", m))
 		}
 	}
+}
+
+func (c *Cmd) Start() error {
+	return nil
+}
+
+func (c *Cmd) Close() {
 }

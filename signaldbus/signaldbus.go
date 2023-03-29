@@ -93,7 +93,8 @@ func NewAccount(log *slog.Logger, busType DbusType) (acc *Account, err error) {
 	return acc, nil
 }
 
-// starts listening for signals from signal-cli
+// starts listening for signals from signal-cli. Waits until Listening is
+// completely set up
 func (s *Account) ListenForSignals() {
 	sync := make(chan int)
 	go s.ListenForSignalsWithSync(sync)
@@ -105,6 +106,7 @@ func (s *Account) ListenForSignals() {
 func (s *Account) ListenForSignalsWithSync(sync chan<- int) {
 	if s.signalsListening {
 		s.log.Warn("signals already connected. Skipping this call")
+		sync <- 1
 		return
 	}
 	s.signalsListening = true
