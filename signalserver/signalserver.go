@@ -194,7 +194,7 @@ func (s *SignalServer) Start() error {
 	}
 
 	for _, mod := range s.modules {
-		if err := mod.Start(); err != nil {
+		if err := mod.Start(s.handle); err != nil {
 			return err
 		}
 	}
@@ -206,7 +206,7 @@ func (s *SignalServer) Start() error {
 // cannot be started again. Please construct a new one with NewSignalServer.
 func (s *SignalServer) Close() {
 	for _, mod := range s.modules {
-		mod.Close()
+		mod.Close(s.handle)
 	}
 
 	s.sockVirtRcvCancel()

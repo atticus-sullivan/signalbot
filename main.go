@@ -1,12 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/user"
 	"path/filepath"
 	"runtime"
 	"signalbot_go/signalserver"
 	"strings"
+	"time"
 
 	"golang.org/x/exp/slog"
 )
@@ -54,9 +56,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer s.Close()
 	if err := s.Start(); err != nil {
 		panic(err)
 	}
+	time.Sleep(time.Minute*1)
 	wait := make(chan interface{})
 	<-wait
+	fmt.Println("closing")
 }

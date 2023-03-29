@@ -10,8 +10,8 @@ import (
 // can handle a signal-message
 type Handler interface {
 	Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message))
-	Start() error
-	Close()
+	Start(virtRcv func(*signaldbus.Message)) error
+	Close(virtRcv func(*signaldbus.Message))
 }
 
 // config for a handler. Can be parsed from yaml

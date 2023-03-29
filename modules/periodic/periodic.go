@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	cmdsplit "signalbot_go/internal/cmdSplit"
 	"signalbot_go/internal/perioder"
 	"signalbot_go/internal/signalsender"
@@ -13,6 +15,7 @@ import (
 
 	"github.com/alexflint/go-arg"
 	"golang.org/x/exp/slog"
+	"gopkg.in/yaml.v3"
 )
 
 type Periodic struct {
@@ -112,9 +115,6 @@ func (p *Periodic) Handle(m *signaldbus.Message, signal signalsender.SignalSende
 	} else {
 		switch {
 		case args.Add != nil:
-			if args.Add.Desc == "" {
-				args.Add.Desc = args.Add.Msg
-			}
 			args.Add.Every += time.Duration(24*time.Hour) * time.Duration(args.Add.EveryD)
 			args.Add.EveryD = 0
 			if args.Add.Start.IsZero() {
@@ -129,14 +129,56 @@ func (p *Periodic) Handle(m *signaldbus.Message, signal signalsender.SignalSende
 	}
 }
 
-func (p *Periodic) Start() error {
+func (p *Periodic) Start(virtRcv func(*signaldbus.Message)) error {
+	// start perioder
 	var ctx context.Context
 	ctx, p.stop = context.WithCancel(context.Background())
-	p.perioder.Start(ctx)
+	go p.perioder.Start(ctx)
+
+	// read saved events
+	f, err := os.Open(filepath.Join(p.ConfigDir, "events.yaml"))
+	if !os.IsNotExist(err){
+		if err != nil {
+			// p.Log.Error(fmt.Sprintf("periodic module: Error opening 'events.yaml': %v", err))
+			return err
+		}
+		d := yaml.NewDecoder(f)
+		events := make(map[uint]perioder.ReocEventImplDeadline[signaldbus.Message])
+		err = d.Decode(&events)
+		if err != nil {
+			// p.Log.Error(fmt.Sprintf("periodic module: Error decoding to 'events.yaml': %v", err))
+			return err
+		}
+		// add events
+		for _,v := range events {
+			v.Foo = func(time time.Time, event perioder.ReocEvent[signaldbus.Message]) {
+				meta := event.Metadata()
+				virtRcv(&meta)
+			}
+			if v.Stop.IsZero() {
+				p.perioder.Add(&v.ReocEventImpl)
+			} else {
+				p.perioder.Add(&v)
+			}
+		}
+	}
 	return nil
 }
 
-func (p *Periodic) Close() {
+func (p *Periodic) Close(virtRcv func(*signaldbus.Message)) {
+	fmt.Println("closing periodic stuff")
+	f, err := os.Create(filepath.Join(p.ConfigDir, "events.yaml"))
+	if err != nil {
+		p.Log.Error(fmt.Sprintf("periodic module: Error opening 'events.yaml': %v", err))
+	}
+	e := yaml.NewEncoder(f)
+	events := p.perioder.Events()
+	fmt.Println(events)
+	err = e.Encode(events)
+	if err != nil {
+		p.Log.Error(fmt.Sprintf("periodic module: Error endcoding to 'events.yaml': %v", err))
+	}
+
 	p.stop()
 }
 
@@ -155,16 +197,19 @@ func (p *Periodic) Add(add *addArgs, m signaldbus.Message, signal signalsender.S
 		p.sendError(&m, signal, errMsg)
 		return
 	}
+	if add.Desc == "" {
+		add.Desc = m.Message
+	}
 	var event perioder.ReocEvent[signaldbus.Message]
 	if add.Until.IsZero(){
-		event = perioder.NewReocEventImpl(add.Start, add.Every, add.Desc, &m, func(time time.Time) {
-			mCopy := m
-			virtRcv(&mCopy)
+		event = perioder.NewReocEventImpl(add.Start, add.Every, add.Desc, m, func(time time.Time, event perioder.ReocEvent[signaldbus.Message]) {
+				meta := event.Metadata()
+				virtRcv(&meta)
 		})
 	} else {
-		event = perioder.NewReocEventImplDeadline(add.Start, add.Every, add.Until, add.Desc, &m, func(time time.Time) {
-			mCopy := m
-			virtRcv(&mCopy)
+		event = perioder.NewReocEventImplDeadline(add.Start, add.Every, add.Until, add.Desc, m, func(time time.Time, event perioder.ReocEvent[signaldbus.Message]) {
+				meta := event.Metadata()
+				virtRcv(&meta)
 		})
 	}
 	p.perioder.Add(event)

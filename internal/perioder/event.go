@@ -12,17 +12,17 @@ import (
 type ReocEventImpl[T any] struct {
 	// Id          uint // TODO should it be this way or should the event know its ID?
 	Description  string `yaml:"desc"`
-	Foo          func(time.Time) `yaml:"-"`
-	Metadata_store     *T `yaml:"meta"` // can be used for reconstructing Foo after (de)serialization
+	Foo          func(time.Time, ReocEvent[T]) `yaml:"-"`
+	Metadata_store     T `yaml:"meta"` // This is ONLY public so that yaml can see this member. Do not modify! Can be used for reconstructing Foo after (de)serialization
 	Start        time.Time `yaml:"start"`
 	Interval     time.Duration `yaml:"interval"`
-	Log          *slog.Logger
-	checkStopped func() bool
+	Log          *slog.Logger `yaml:"-"`
+	checkStopped func() bool `yaml:"-"`
 	// should store context as well to be able to tell if the event was stopped with the context
 	cancel context.CancelFunc
 }
 
-func NewReocEventImpl[T any](start time.Time, interval time.Duration, desc string, meta *T, foo func(time.Time)) *ReocEventImpl[T] {
+func NewReocEventImpl[T any](start time.Time, interval time.Duration, desc string, meta T, foo func(time.Time, ReocEvent[T])) *ReocEventImpl[T] {
 	e := ReocEventImpl[T]{
 		Start:       start,
 		Interval:    interval,
@@ -33,7 +33,7 @@ func NewReocEventImpl[T any](start time.Time, interval time.Duration, desc strin
 	if foo != nil {
 		e.Foo = foo
 	} else {
-		e.Foo = func(_ time.Time) {}
+		e.Foo = func(_ time.Time, _ ReocEvent[T]) {}
 	}
 
 	return &e
@@ -76,7 +76,7 @@ func (event *ReocEventImpl[T]) run(ctx context.Context) {
 				ticker.Reset(event.Interval)
 			}
 			event.Log.LogAttrs(context.TODO(), slog.LevelInfo, "event triggering", slog.String("desc", event.Description))
-			event.Foo(t)
+			event.Foo(t, event)
 		case <-ctx.Done():
 			event.Log.LogAttrs(context.TODO(), slog.LevelInfo, "event cancel", slog.String("desc", event.Description))
 			running = false
@@ -92,7 +92,7 @@ func (event *ReocEventImpl[T]) Stopped() bool {
 func (event *ReocEventImpl[T]) SetLog(log *slog.Logger) {
 	event.Log = log
 }
-func (event *ReocEventImpl[T]) Metadata() *T {
+func (event *ReocEventImpl[T]) Metadata() T {
 	return event.Metadata_store
 }
 func (r ReocEventImpl[T]) String() string {

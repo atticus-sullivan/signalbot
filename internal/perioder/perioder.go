@@ -24,7 +24,7 @@ type ReocEvent[T any] interface {
 	// check if the event was stopped by the context
 	Stopped() bool
 	SetLog(*slog.Logger)
-	Metadata() *T
+	Metadata() T
 	// get string representation
 	String() string
 	Cancel()
@@ -85,9 +85,10 @@ func (p *PerioderImpl[T]) Events() map[uint]ReocEvent[T] {
 
 	r := make(map[uint]ReocEvent[T], len(p.events))
 	for id, event := range p.events {
-		r[id] = event
+		// if !event.Stopped() {
+			r[id] = event
+		// }
 	}
-
 	return r
 }
 func (p *PerioderImpl[T]) String() string {

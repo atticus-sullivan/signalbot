@@ -125,9 +125,9 @@ func (c *Cmd) Handle(m *signaldbus.Message, signal signalsender.SignalSender, vi
 	}
 }
 
-func (c *Cmd) Start() error {
+func (c *Cmd) Start(virtRcv func(*signaldbus.Message)) error {
 	return nil
 }
 
-func (c *Cmd) Close() {
+func (c *Cmd) Close(virtRcv func(*signaldbus.Message)) {
 }

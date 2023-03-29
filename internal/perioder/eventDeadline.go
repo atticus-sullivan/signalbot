@@ -11,7 +11,7 @@ type ReocEventImplDeadline[T any] struct {
 	Stop time.Time `yaml:"stop"`
 }
 
-func NewReocEventImplDeadline[T any](start time.Time, interval time.Duration, stop time.Time, desc string, meta *T, foo func(time.Time)) *ReocEventImplDeadline[T] {
+func NewReocEventImplDeadline[T any](start time.Time, interval time.Duration, stop time.Time, desc string, meta T, foo func(time.Time, ReocEvent[T])) *ReocEventImplDeadline[T] {
 	e := ReocEventImplDeadline[T]{
 		ReocEventImpl: *NewReocEventImpl(start, interval, desc, meta, foo),
 		Stop:          stop,
