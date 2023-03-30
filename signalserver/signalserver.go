@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"signalbot_go/modules/cmd"
 	"signalbot_go/modules/periodic"
+	"signalbot_go/modules/refectory"
 	"signalbot_go/signaldbus"
 	"strings"
 
@@ -74,6 +75,9 @@ func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalSe
 	}
 	if s.modules["periodic"], err = periodic.NewPeriodic(log.With(), filepath.Join(cfgDir, "periodic")); err != nil {
 		return nil, fmt.Errorf("'periodic' module: %v", err)
+	}
+	if s.modules["refectory"], err = refectory.NewRefectory(log.With(), filepath.Join(cfgDir, "refectory")); err != nil {
+		return nil, fmt.Errorf("'refectory' module: %v", err)
 	}
 
 	// generate prefix2Module
