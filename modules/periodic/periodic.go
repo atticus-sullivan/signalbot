@@ -70,6 +70,7 @@ func (p *Periodic) Handle(m *signaldbus.Message, signal signalsender.SignalSende
 	parser, err := arg.NewParser(arg.Config{}, &args)
 
 	if err != nil {
+		p.Log.Error(fmt.Sprintf("periodic module: newParser -> %v", err))
 		return
 	}
 
@@ -101,7 +102,7 @@ func (p *Periodic) Handle(m *signaldbus.Message, signal signalsender.SignalSende
 				p.sendError(m, signal, errMsg)
 				return
 			} else {
-				errMsg := fmt.Sprintf("Error: %v", string(b))
+				errMsg := string(b)
 				p.Log.Info(fmt.Sprintf("periodic module: Error: %v", err))
 				p.sendError(m, signal, errMsg)
 				return
@@ -166,7 +167,7 @@ func (p *Periodic) Start(virtRcv func(*signaldbus.Message)) error {
 }
 
 func (p *Periodic) Close(virtRcv func(*signaldbus.Message)) {
-	fmt.Println("closing periodic stuff")
+	p.Log.Info("closing periodic stuff")
 	f, err := os.Create(filepath.Join(p.ConfigDir, "events.yaml"))
 	if err != nil {
 		p.Log.Error(fmt.Sprintf("periodic module: Error opening 'events.yaml': %v", err))
