@@ -1,14 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"os"
+	"os/signal"
 	"os/user"
 	"path/filepath"
 	"runtime"
 	"signalbot_go/signalserver"
 	"strings"
-	"time"
+	"syscall"
 
 	"golang.org/x/exp/slog"
 )
@@ -52,6 +52,9 @@ func getDataDir() string {
 }
 
 func main() {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
+
 	s, err := signalserver.NewSignalServer(logInit(), getCfgDir(), getDataDir())
 	if err != nil {
 		panic(err)
@@ -60,8 +63,6 @@ func main() {
 	if err := s.Start(); err != nil {
 		panic(err)
 	}
-	time.Sleep(time.Minute * 1)
-	wait := make(chan interface{})
-	<-wait
-	fmt.Println("closing")
+	// Block until a signal is received.
+	<-c
 }
