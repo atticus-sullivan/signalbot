@@ -14,6 +14,7 @@ import (
 	"signalbot_go/modules/cmd"
 	"signalbot_go/modules/periodic"
 	"signalbot_go/modules/refectory"
+	"signalbot_go/modules/weather"
 	"signalbot_go/signaldbus"
 	"strings"
 
@@ -78,6 +79,9 @@ func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalSe
 	}
 	if s.modules["refectory"], err = refectory.NewRefectory(log.With(), filepath.Join(cfgDir, "refectory")); err != nil {
 		return nil, fmt.Errorf("'refectory' module: %v", err)
+	}
+	if s.modules["weather"], err = weather.NewWeather(log.With(), filepath.Join(cfgDir, "weather")); err != nil {
+		return nil, fmt.Errorf("'weather' module: %v", err)
 	}
 
 	// generate prefix2Module
