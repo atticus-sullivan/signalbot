@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	cmdsplit "signalbot_go/internal/cmdSplit"
 	"signalbot_go/internal/signalsender"
@@ -22,6 +23,7 @@ type Tv struct {
 	log         *slog.Logger `yaml:"-"`
 	ConfigDir   string       `yaml:"-"`
 	SenderOrder []string     `yaml:"senderOrder"`
+	UpdateCmd   string       `yaml:"updateCmd"`
 	Location    string       `yaml:"location"`
 	loc         *time.Location
 }
@@ -59,6 +61,7 @@ func NewTv(log *slog.Logger, cfgDir string) (*Tv, error) {
 }
 
 func (t *Tv) Validate() error {
+	// TODO check if updateCmd exists and is executable
 	return nil
 }
 
@@ -71,6 +74,7 @@ func (t *Tv) sendError(m *signaldbus.Message, signal signalsender.SignalSender, 
 type Args struct {
 	When string `arg:"positional"`
 	Post uint   `arg:"-p,--post" default:"1"`
+	Update bool   `arg:"-u,--update" default:"false"`
 }
 
 func (t *Tv) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
@@ -122,6 +126,16 @@ func (t *Tv) Handle(m *signaldbus.Message, signal signalsender.SignalSender, vir
 			return
 		}
 	} else {
+		if args.Update {
+			cmd := exec.Command(t.UpdateCmd)
+			err := cmd.Run()
+			if err != nil {
+				errMsg := fmt.Sprintf("Error: %v", err)
+				t.log.Error(errMsg)
+				t.sendError(m, signal, errMsg)
+				return
+			}
+		}
 		target := time.Now()
 		switch args.When {
 		case "prime":
