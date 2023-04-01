@@ -72,27 +72,27 @@ func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalSe
 	}
 
 	// todoMod register modules
-	if _,ok := cfg.Handlers["cmd"]; ok {
+	if _, ok := cfg.Handlers["cmd"]; ok {
 		if s.modules["cmd"], err = cmd.NewCmd(log.With(), filepath.Join(cfgDir, "cmd")); err != nil {
 			return nil, fmt.Errorf("'cmd' module: %v", err)
 		}
 	}
-	if _,ok := cfg.Handlers["periodic"]; ok {
+	if _, ok := cfg.Handlers["periodic"]; ok {
 		if s.modules["periodic"], err = periodic.NewPeriodic(log.With(), filepath.Join(cfgDir, "periodic")); err != nil {
 			return nil, fmt.Errorf("'periodic' module: %v", err)
 		}
 	}
-	if _,ok := cfg.Handlers["refectory"]; ok {
+	if _, ok := cfg.Handlers["refectory"]; ok {
 		if s.modules["refectory"], err = refectory.NewRefectory(log.With(), filepath.Join(cfgDir, "refectory")); err != nil {
 			return nil, fmt.Errorf("'refectory' module: %v", err)
 		}
 	}
-	if _,ok := cfg.Handlers["weather"]; ok {
+	if _, ok := cfg.Handlers["weather"]; ok {
 		if s.modules["weather"], err = weather.NewWeather(log.With(), filepath.Join(cfgDir, "weather")); err != nil {
 			return nil, fmt.Errorf("'weather' module: %v", err)
 		}
 	}
-	if _,ok := cfg.Handlers["tv"]; ok {
+	if _, ok := cfg.Handlers["tv"]; ok {
 		if s.modules["tv"], err = tv.NewTv(log.With(), filepath.Join(cfgDir, "tv")); err != nil {
 			return nil, fmt.Errorf("'tv' module: %v", err)
 		}
