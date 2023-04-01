@@ -284,14 +284,17 @@ func (s *SignalServer) handleLine(m *signaldbus.Message) {
 			return
 		}
 		user_allow, set := handler.Access.AccessSet[m.Sender]
-		if !set && s.Handlers[module].Access.Def == Block {
-			s.log.Info(fmt.Sprintf("Accesscontrol blocked. Set: %v, Default: %v", set, s.Handlers[module].Access.Def))
+		if !set && handler.Access.Def == Block {
+			s.log.Info(fmt.Sprintf("Accesscontrol blocked. Set: %v, Default: %v", set, handler.Access.Def))
 			return
 		}
-		allow, set := user_allow[hex.EncodeToString(m.GroupId)]
-		if (!set && s.Handlers[module].Access.Def == Block) || (set && !allow) {
-			s.log.Info(fmt.Sprintf("Accesscontrol blocked. Set: %v, allow: %v, user: %v, module: %v", set, allow, m.Sender, hex.EncodeToString(m.GroupId)))
-			return
+		// allow for all chats if no group set
+		if len(user_allow) > 0 {
+			allow, set := user_allow[hex.EncodeToString(m.GroupId)]
+			if (!set && handler.Access.Def == Block) || (set && !allow) {
+				s.log.Info(fmt.Sprintf("Accesscontrol blocked. Set: %v, allow: %v, user: %v, group: %v", set, allow, m.Sender, hex.EncodeToString(m.GroupId)))
+				return
+			}
 		}
 	}
 	// at this point the user is authorized for this module
