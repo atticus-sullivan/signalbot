@@ -174,7 +174,7 @@ func (p *Periodic) Close(virtRcv func(*signaldbus.Message)) {
 	}
 	e := yaml.NewEncoder(f)
 	events := p.perioder.Events()
-	fmt.Println(events)
+	// fmt.Println(events)
 	err = e.Encode(events)
 	if err != nil {
 		p.Log.Error(fmt.Sprintf("periodic module: Error endcoding to 'events.yaml': %v", err))

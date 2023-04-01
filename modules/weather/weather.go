@@ -139,8 +139,6 @@ func (w *Weather) Handle(m *signaldbus.Message, signal signalsender.SignalSender
 			return
 		}
 	} else {
-		date := time.Now()
-		fmt.Println(date)
 		// check quota
 		if fine, err := w.incQuota(); err != nil {
 			errMsg := fmt.Sprintf("openweather Error checking quota. %v", err)
@@ -284,7 +282,6 @@ func (w *Weather) get(loc Position) (io.ReadCloser, error) {
 		"units":   {w.Unitsystem},
 		"lang":    {w.Lang},
 	}
-	fmt.Println(baseUrl + params.Encode())
 	resp, err := http.Get(baseUrl + params.Encode())
 	if err != nil {
 		return nil, err
