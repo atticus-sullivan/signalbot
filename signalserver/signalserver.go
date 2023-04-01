@@ -14,6 +14,7 @@ import (
 	"signalbot_go/modules/cmd"
 	"signalbot_go/modules/periodic"
 	"signalbot_go/modules/refectory"
+	"signalbot_go/modules/tv"
 	"signalbot_go/modules/weather"
 	"signalbot_go/signaldbus"
 	"strings"
@@ -89,6 +90,11 @@ func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalSe
 	if _,ok := cfg.Handlers["weather"]; ok {
 		if s.modules["weather"], err = weather.NewWeather(log.With(), filepath.Join(cfgDir, "weather")); err != nil {
 			return nil, fmt.Errorf("'weather' module: %v", err)
+		}
+	}
+	if _,ok := cfg.Handlers["tv"]; ok {
+		if s.modules["tv"], err = tv.NewTv(log.With(), filepath.Join(cfgDir, "tv")); err != nil {
+			return nil, fmt.Errorf("'tv' module: %v", err)
 		}
 	}
 
