@@ -272,7 +272,6 @@ func (s *SignalServer) handleLine(m *signaldbus.Message) {
 	prefix, remainingMsg, _ := strings.Cut(m.Message, " ")
 	module, set := s.prefix2module[prefix]
 	if !set {
-		s.log.Warn(fmt.Sprintf("Unknown prefix %v", prefix))
 		return
 	}
 
