@@ -29,7 +29,7 @@ func (s *Ard2) Parse(r io.ReadCloser, ret chan<- show.Show, now time.Time) {
 		return
 	}
 
-	items := cascadia.QueryAll(root, cascadia.MustCompile(".accordion-item"))
+	items := cascadia.QueryAll(root, cascadia.MustCompile(".accordion-item.event"))
 	s.Log.Debug(fmt.Sprintf("#Items: %v", len(items)))
 	lastDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, s.Location)
 	for _, i := range items {
