@@ -2,14 +2,13 @@ package tv
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	cmdsplit "signalbot_go/internal/cmdSplit"
 	"signalbot_go/internal/signalsender"
+	"signalbot_go/modules/tv/internal/show"
 	"signalbot_go/signaldbus"
 	"strings"
 	"time"
@@ -20,12 +19,13 @@ import (
 )
 
 type Tv struct {
-	log         *slog.Logger `yaml:"-"`
-	ConfigDir   string       `yaml:"-"`
-	SenderOrder []string     `yaml:"senderOrder"`
-	UpdateCmd   string       `yaml:"updateCmd"`
-	Location    string       `yaml:"location"`
+	log         *slog.Logger  `yaml:"-"`
+	ConfigDir   string        `yaml:"-"`
+	SenderOrder []string      `yaml:"senderOrder"`
+	Location    string        `yaml:"location"`
+	Timeout     time.Duration `yaml:"timeout"`
 	loc         *time.Location
+	fetcher     *Fetcher
 }
 
 func NewTv(log *slog.Logger, cfgDir string) (*Tv, error) {
@@ -52,6 +52,8 @@ func NewTv(log *slog.Logger, cfgDir string) (*Tv, error) {
 		return nil, err
 	}
 
+	t.fetcher = NewFetcher(t.log.With(), t.loc, t.Timeout)
+
 	// validation
 	if err := t.Validate(); err != nil {
 		return nil, err
@@ -61,7 +63,9 @@ func NewTv(log *slog.Logger, cfgDir string) (*Tv, error) {
 }
 
 func (t *Tv) Validate() error {
-	// TODO check if updateCmd exists and is executable
+	if t.Timeout == time.Duration(0) {
+		return fmt.Errorf("Invalid timeout, cannot be 0")
+	}
 	return nil
 }
 
@@ -74,7 +78,6 @@ func (t *Tv) sendError(m *signaldbus.Message, signal signalsender.SignalSender, 
 type Args struct {
 	When string `arg:"positional"`
 	Post uint   `arg:"-p,--post" default:"1"`
-	Update bool   `arg:"-u,--update" default:"false"`
 }
 
 func (t *Tv) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
@@ -126,17 +129,8 @@ func (t *Tv) Handle(m *signaldbus.Message, signal signalsender.SignalSender, vir
 			return
 		}
 	} else {
-		if args.Update {
-			cmd := exec.Command(t.UpdateCmd)
-			err := cmd.Run()
-			if err != nil {
-				errMsg := fmt.Sprintf("Error: %v", err)
-				t.log.Error(errMsg)
-				t.sendError(m, signal, errMsg)
-				return
-			}
-		}
 		target := time.Now()
+
 		switch args.When {
 		case "prime":
 			target = time.Date(target.Year(), target.Month(), target.Day(), 20, 15, 0, 0, t.loc)
@@ -146,6 +140,7 @@ func (t *Tv) Handle(m *signaldbus.Message, signal signalsender.SignalSender, vir
 			t.sendError(m, signal, errMsg)
 			return
 		}
+
 		out, err := t.format(target, args.Post)
 		if err != nil {
 			errMsg := fmt.Sprintf("Error: %v", err)
@@ -153,6 +148,7 @@ func (t *Tv) Handle(m *signaldbus.Message, signal signalsender.SignalSender, vir
 			t.sendError(m, signal, errMsg)
 			return
 		}
+
 		_, err = signal.Respond(out, []string{}, m)
 		if err != nil {
 			errMsg := fmt.Sprintf("Error: %v", err)
@@ -163,48 +159,25 @@ func (t *Tv) Handle(m *signaldbus.Message, signal signalsender.SignalSender, vir
 	}
 }
 
-type general map[string][]show
-
-type show struct {
-	Time time.Time `yaml:"time"`
-	Name string    `yaml:"name"`
-}
-
-func (s *show) String() string {
-	if s == nil {
-		return ""
-	}
-	return fmt.Sprintf("%s -> %s", s.Time.Format("2006-01-02 15:04"), s.Name)
-}
-
 func (t *Tv) format(target time.Time, postOrig uint) (string, error) {
-	if _, err := os.Stat(filepath.Join(t.ConfigDir, "shows.lock")); !errors.Is(err, os.ErrNotExist) {
-		return "", fmt.Errorf("The database is currently updating")
-	}
-
-	f, err := os.Open(filepath.Join(t.ConfigDir, "shows.yaml"))
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	d := yaml.NewDecoder(f)
-	g := &general{}
-	err = d.Decode(g)
-	if err != nil {
-		return "", err
-	}
+	g := t.fetcher.Get()
 
 	builder := strings.Builder{}
 
+	first := true
 	for _, sender := range t.SenderOrder {
-		shows, ok := (*g)[sender]
+		shows, ok := g[sender]
 		if !ok {
 			continue
 		}
+		if !first {
+			builder.WriteRune('\n')
+		} else {
+			first = false
+		}
 		builder.WriteString(sender)
 		builder.WriteRune('\n')
-		var last *show = nil
+		var last *show.Show = nil
 		post := postOrig
 		for _, s := range shows {
 			if post == 0 {
@@ -218,7 +191,6 @@ func (t *Tv) format(target time.Time, postOrig uint) (string, error) {
 			sNew := s
 			last = &sNew
 		}
-		builder.WriteRune('\n')
 	}
 	return builder.String(), nil
 }
