@@ -78,6 +78,7 @@ func (r *Refectory) sendError(m *signaldbus.Message, signal signalsender.SignalS
 type Args struct {
 	Where string `arg:"positional"`
 	When  int    `arg:"-d,--day" default:"0"`
+	Quiet  bool    `arg:"-q,--quiet" default:"false"`
 }
 
 func (r *Refectory) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
@@ -148,7 +149,9 @@ func (r *Refectory) Handle(m *signaldbus.Message, signal signalsender.SignalSend
 					errMsg = fmt.Sprintf("Error: %v", err)
 				}
 				r.log.Error(errMsg)
-				r.sendError(m, signal, errMsg)
+				if !args.Quiet || err != NotOpenThatDay {
+					r.sendError(m, signal, errMsg)
+				}
 				continue
 			}
 			_, err = signal.Respond(menuS, []string{}, m)
