@@ -263,7 +263,7 @@ func (s *SignalServer) handle(m *signaldbus.Message) {
 	for scanner.Scan() {
 		mLine := *m // copy construct like
 		mLine.Message = scanner.Text()
-		s.handleLine(m)
+		s.handleLine(&mLine)
 	}
 }
 
