@@ -99,7 +99,7 @@ func (o *openweatherResp) String() string {
 		// TODO log warning about invalid TZ, default to UTC
 	}
 
-	builder.WriteRune(weatherCCs[o.Current.Weather[0].Id].icon)
+	builder.WriteString(weatherCCs[o.Current.Weather[0].Id].icon)
 	// builder.WriteString(date.Format(" Mon 02.01 15:04:05 "))
 	builder.WriteString(date.Format(" Mon 02.01  "))
 	builder.WriteString(strconv.FormatInt(int64(o.Current.Temp), 10))
@@ -144,7 +144,7 @@ func (o *openweatherResp) String() string {
 			}
 			date := time.Unix(d.Dt, 0).In(tz)
 
-			builder.WriteRune(weatherCCs[d.Weather[0].Id].icon)
+			builder.WriteString(weatherCCs[d.Weather[0].Id].icon)
 			builder.WriteString(date.Format(" Mon 02.01  "))
 			builder.WriteString(strconv.FormatFloat(float64(d.Temp.Min), 'f', 0, 32))
 			builder.WriteString("°C - ")
@@ -173,7 +173,7 @@ func (o *openweatherResp) String() string {
 			}
 			date := time.Unix(h.Dt, 0).In(tz)
 
-			builder.WriteRune(weatherCCs[h.Weather[0].Id].icon)
+			builder.WriteString(weatherCCs[h.Weather[0].Id].icon)
 			builder.WriteString(date.Format(" 15:04 02.01  "))
 			builder.WriteString(strconv.FormatFloat(float64(h.Temp), 'f', 0, 32))
 			builder.WriteString("°C")

@@ -1,19 +1,19 @@
 package weather
 
-var icons map[string]rune = map[string]rune{
-	"thunderstorm": '\U000026c8', // '⛈️', // 🌩️
-	"drizzle":      '\U0001f327', // '🌧️',
-	"rain":         '\U0001f326', // '🌦️',
-	"snow":         '\U00002744', // '❄️', // 🌨️
-	"showerRain":   '\U0001f327', // '🌧',
-	"fog":          '\U0001f32b', // '🌫️',
-	"clear":        '\U00002600', // '☀️',
+var icons map[string]string = map[string]string{
+	"thunderstorm": "\U000026c8\ufe0f", // '⛈️', // 🌩️
+	"drizzle":      "\U0001f327\ufe0f", // '🌧️',
+	"rain":         "\U0001f326\ufe0f", // '🌦️',
+	"snow":         "\U00002744\ufe0f", // '❄️', // 🌨️
+	"showerRain":   "\U0001f327\ufe0f", // '🌧',
+	"fog":          "\U0001f32b\ufe0f", // '🌫️',
+	"clear":        "\U00002600\ufe0f", // '☀️',
 
 	// all the same since no better icon found
-	"cloudsFew":   '\U00002601', // '☁️',
-	"cloudsScat":  '\U00002601', // '☁️',
-	"cloudsBrok":  '\U00002601', // '☁️',
-	"cloudsOverc": '\U00002601', // '☁️'
+	"cloudsFew":   "\U00002601\ufe0f", // '☁️',
+	"cloudsScat":  "\U00002601\ufe0f", // '☁️',
+	"cloudsBrok":  "\U00002601\ufe0f", // '☁️',
+	"cloudsOverc": "\U00002601\ufe0f", // '☁️'
 }
 
 var langs map[string]bool = map[string]bool{
@@ -71,7 +71,7 @@ var wind []string = []string{
 
 type weatherTextIcon struct {
 	text string
-	icon rune
+	icon string
 }
 
 var weatherCCs map[uint]weatherTextIcon = map[uint]weatherTextIcon{
