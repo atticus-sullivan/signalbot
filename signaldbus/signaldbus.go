@@ -141,19 +141,19 @@ func (s *Account) ListenForSignalsWithSync(sync chan<- int) {
 			// s.log.Info(fmt.Sprintf("%v", ele))
 			switch ele.Name {
 			case "org.asamk.Signal.SyncMessageReceived":
-				msg := NewSyncMessage(ele)
+				msg := NewSyncMessage(ele, s.selfNr)
 				s.log.Info("Sync", slog.Any("body", msg.String()))
 				for _, h := range syncMessageHandlers {
 					(*h).handle(msg)
 				}
 			case "org.asamk.Signal.ReceiptReceived":
 				s.log.Info("Receipt", slog.Any("body", ele.Body))
-				msg := NewReceipt(ele)
+				msg := NewReceipt(ele, s.selfNr)
 				for _, h := range receiptMessageHandlers {
 					(*h).handle(msg)
 				}
 			case "org.asamk.Signal.MessageReceived":
-				msg := NewMessage(ele)
+				msg := NewMessage(ele, s.selfNr)
 				s.log.Info("Message", slog.Any("body", msg.String()))
 				for _, h := range messageHandlers {
 					(*h).handle(msg)

@@ -18,5 +18,9 @@ func (s *Account) SendGeneric(message string, attachments []string, recipient st
 
 // respond to a certain message. The recipient/groupID will be extracted from the message
 func (s *Account) Respond(message string, attachments []string, m *Message) (timestamp int64, err error) {
-	return s.SendGeneric(message, attachments, m.Sender, m.GroupId)
+	dst := m.Sender
+	if m.Sender == s.selfNr {
+		dst = m.Receiver
+	}
+	return s.SendGeneric(message, attachments, dst, m.GroupId)
 }

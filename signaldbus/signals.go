@@ -75,7 +75,7 @@ func (s *Account) AddReceiptHandlerFunc(handler func(*Receipt)) error {
 // device.
 type SyncMessage struct {
 	Message `yaml:",inline"`
-	// DBus code for destination
+	// Phonenumber of the destination
 	Destination string `yaml:"dst"`
 }
 
@@ -108,6 +108,8 @@ type Message struct {
 	Timestamp int64 `yaml:"ts"`
 	// Phone number of the sender
 	Sender string `yaml:"sender"`
+	// Phone number of the reveicer
+	Receiver string `yaml:"receiver"`
 	// Byte array representing the internal group identifier (empty when
 	// private message)
 	GroupId []byte `yaml:"gid,flow"`
@@ -139,7 +141,7 @@ func (m *Message) String() string {
 	return builder.String()
 }
 
-func NewSyncMessage(v *dbus.Signal) *SyncMessage {
+func NewSyncMessage(v *dbus.Signal, self string) *SyncMessage {
 	msg := SyncMessage{
 		Message: Message{
 			Timestamp:   v.Body[0].(int64),
@@ -150,10 +152,11 @@ func NewSyncMessage(v *dbus.Signal) *SyncMessage {
 		},
 		Destination: v.Body[2].(string),
 	}
+	msg.Message.Receiver = msg.Destination
 	return &msg
 }
 
-func NewReceipt(v *dbus.Signal) *Receipt {
+func NewReceipt(v *dbus.Signal, self string) *Receipt {
 	msg := Receipt{
 		Timestamp: v.Body[0].(int64),
 		Sender:    v.Body[1].(string),
@@ -161,7 +164,7 @@ func NewReceipt(v *dbus.Signal) *Receipt {
 	return &msg
 }
 
-func NewMessage(v *dbus.Signal) *Message {
+func NewMessage(v *dbus.Signal, self string) *Message {
 	msg := Message{
 		Timestamp:   v.Body[0].(int64),
 		Sender:      v.Body[1].(string),
@@ -169,12 +172,12 @@ func NewMessage(v *dbus.Signal) *Message {
 		Message:     v.Body[3].(string),
 		Attachments: v.Body[4].([]string),
 	}
+	msg.Receiver = self
 	return &msg
 }
 
 func NewMessageFromReader(r io.Reader) (*Message, error) {
 	rb := bufio.NewReader(r)
-	m := Message{}
 
 	gidB, err := rb.ReadBytes('\n')
 	if err != nil && err == io.EOF {
@@ -186,7 +189,12 @@ func NewMessageFromReader(r io.Reader) (*Message, error) {
 		return nil, err
 	}
 
-	source, err := rb.ReadBytes('\n')
+	sender, err := rb.ReadBytes('\n')
+	if err != nil && err == io.EOF {
+		return nil, err
+	}
+
+	receiver, err := rb.ReadBytes('\n')
 	if err != nil && err == io.EOF {
 		return nil, err
 	}
@@ -196,12 +204,21 @@ func NewMessageFromReader(r io.Reader) (*Message, error) {
 		return nil, err
 	}
 
+	m := Message{}
+
 	m.Message = strings.TrimSpace(string(msg))
+
 	if len(gidS) != 0 {
 		m.GroupId = gid
 	}
-	if len(source) != 0 {
-		m.Sender = strings.TrimSpace(string(source))
+
+	if len(sender) != 0 {
+		m.Sender = strings.TrimSpace(string(sender))
 	}
+
+	if len(receiver) != 0 {
+		m.Receiver = strings.TrimSpace(string(receiver))
+	}
+
 	return &m, nil
 }
