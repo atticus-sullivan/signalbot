@@ -103,7 +103,7 @@ func (p *Periodic) Handle(m *signaldbus.Message, signal signalsender.SignalSende
 				return
 			} else {
 				errMsg := string(b)
-				p.Log.Info(fmt.Sprintf("periodic module: Error: %v", err))
+				p.Log.Info(fmt.Sprintf("periodic module: Help-text: %v", errMsg))
 				p.sendError(m, signal, errMsg)
 				return
 			}
@@ -241,6 +241,7 @@ func (p *Periodic) Rm(rm *rmArgs, m signaldbus.Message, signal signalsender.Sign
 		return
 	}
 	p.Log.Info(fmt.Sprintf("periodic module: canceling event with ID: %d (%s)", rm.Id, event.String()))
+	p.perioder.Remove(rm.Id)
 	event.Cancel()
 	if _, err := signal.Respond(fmt.Sprintf("Removed %v\n", event.String()), nil, &m); err != nil {
 		p.Log.Error(fmt.Sprintf("periodic module: error sending rm success msg: %v", err))

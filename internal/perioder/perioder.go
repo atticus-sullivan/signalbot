@@ -35,6 +35,8 @@ type Perioder[T any] interface {
 	Start(ctx context.Context)
 	// add an event to the Perioder
 	Add(ReocEvent[T])
+	// remove an event from the Perioder
+	Remove(uint)
 	// getter for registered events
 	Events() map[uint]ReocEvent[T]
 	// get string representation
@@ -45,6 +47,8 @@ type Perioder[T any] interface {
 type PerioderImpl[T any] struct {
 	add_s       chan<- ReocEvent[T] // used by Add()
 	add_r       <-chan ReocEvent[T] // used for receiving the added Events
+	rem_s       chan<- uint // used by Remove()
+	rem_r       <-chan uint // used for receiving the to be removec Events
 	events      map[uint]ReocEvent[T]
 	eventsMutex sync.RWMutex
 	log         *slog.Logger
@@ -59,6 +63,9 @@ func NewPerioderImpl[T any](log *slog.Logger) *PerioderImpl[T] {
 func (p *PerioderImpl[T]) Add(event ReocEvent[T]) {
 	p.add_s <- event
 }
+func (p *PerioderImpl[T]) Remove(id uint) {
+	p.rem_s <- id
+}
 func (p *PerioderImpl[T]) Start(ctx context.Context) {
 	id := uint(0)
 	for {
@@ -72,6 +79,10 @@ func (p *PerioderImpl[T]) Start(ctx context.Context) {
 			id++
 
 			event.RunAsync(ctx)
+		case id := <-p.rem_r:
+			p.eventsMutex.Lock()
+			delete(p.events, id)
+			p.eventsMutex.Unlock()
 		case <-ctx.Done():
 			break
 		}
