@@ -55,7 +55,7 @@ func (a *AccesscontrolUserChat) Validate() error {
 		}
 		for chat := range m {
 			if !validChat(chat) {
-				return fmt.Errorf("Invalid groupID/chat: %v (must be a hex-string or 'direct' for PNs)", chat)
+				return fmt.Errorf("Invalid groupID/chat: %v (must be a hex-string or phoneNr for PNs)", chat)
 			}
 		}
 	}

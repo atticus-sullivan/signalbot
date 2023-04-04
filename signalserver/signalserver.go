@@ -30,6 +30,7 @@ type SignalServer struct {
 	SignalServerCfg
 	prefix2module     map[string]string
 	acc               *signaldbus.Account
+	self              string
 	modules           map[string]Handler
 	log               *slog.Logger
 	sockMsgCancel     context.CancelFunc
@@ -63,6 +64,12 @@ func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalSe
 	if err != nil {
 		return nil, err
 	}
+
+	s.self, err = s.acc.GetSelfNumber()
+	if err != nil {
+		return nil, err
+	}
+
 	// register functions for handling the messages
 	// run the handler in a new goroutine so that new messages can be received
 	if err := s.acc.AddMessageHandlerFunc(func(m *signaldbus.Message) { go s.handle(m) }); err != nil {
@@ -295,9 +302,13 @@ func (s *SignalServer) handleLine(m *signaldbus.Message) {
 		}
 		// allow for all chats if no group set
 		if len(user_allow) > 0 {
-			allow, set := user_allow[hex.EncodeToString(m.GroupId)]
+			chat := getChatId(m, s.self)
+			if len(m.GroupId) > 0 {
+				chat = hex.EncodeToString(m.GroupId)
+			}
+			allow, set := user_allow[chat]
 			if (!set && handler.Access.Def == Block) || (set && !allow) {
-				s.log.Info(fmt.Sprintf("Accesscontrol blocked. Set: %v, allow: %v, user: %v, group: %v", set, allow, m.Sender, hex.EncodeToString(m.GroupId)))
+				s.log.Info(fmt.Sprintf("Accesscontrol blocked. Set: %v, allow: %v, user: %v, chat: %v", set, allow, m.Sender, chat))
 				return
 			}
 		}

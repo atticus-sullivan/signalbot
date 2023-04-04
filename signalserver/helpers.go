@@ -2,7 +2,9 @@ package signalserver
 
 import (
 	"bytes"
+	"encoding/hex"
 	"regexp"
+	"signalbot_go/signaldbus"
 )
 
 // dropCR drops a terminal \r from the data.
@@ -47,10 +49,16 @@ func validHexstring(hex string) bool {
 	return hexStringRe.MatchString(hex)
 }
 
-// todo make this chat and store chat instead of string?
-type ChatType string
-
-const Direct ChatType = "direct" // todo put thie somewhere else?
 func validChat(chat string) bool {
-	return validHexstring(chat) || ChatType(chat) == Direct
+	return validHexstring(chat) || validPhoneNr(chat)
+}
+
+func getChatId(m *signaldbus.Message, self string) string {
+	if len(m.GroupId) > 0 {
+		return hex.EncodeToString(m.GroupId)
+	}
+	if m.Sender == self {
+		return m.Receiver
+	}
+	return m.Sender
 }
