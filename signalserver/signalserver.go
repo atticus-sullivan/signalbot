@@ -11,6 +11,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"signalbot_go/modules/buechertreff"
 	"signalbot_go/modules/cmd"
 	"signalbot_go/modules/periodic"
 	"signalbot_go/modules/refectory"
@@ -95,6 +96,11 @@ func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalSe
 	if _, ok := cfg.Handlers["tv"]; ok {
 		if s.modules["tv"], err = tv.NewTv(log.With(), filepath.Join(cfgDir, "tv")); err != nil {
 			return nil, fmt.Errorf("'tv' module: %v", err)
+		}
+	}
+	if _, ok := cfg.Handlers["buechertreff"]; ok {
+		if s.modules["buechertreff"], err = buechertreff.NewBuechertreff(log.With(), filepath.Join(cfgDir, "buechertreff")); err != nil {
+			return nil, fmt.Errorf("'buechertreff' module: %v", err)
 		}
 	}
 
