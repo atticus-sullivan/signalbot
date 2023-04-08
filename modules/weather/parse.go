@@ -202,7 +202,7 @@ func (o *openweatherResp) String() string {
 			builder.WriteString(eDate.Format("15:04 02.01):"))
 			builder.WriteRune('\n')
 			builder.WriteString(a.Description)
-			builder.WriteString("Quelle: ")
+			builder.WriteString("\nQuelle: ")
 			builder.WriteString(a.SenderName)
 			builder.WriteRune('\n')
 		}
