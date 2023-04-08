@@ -11,7 +11,6 @@ type SignalServerCfg struct {
 	Dbus           signaldbus.DbusType   `yaml:"dbus"`
 	PortSendMsg    uint16                `yaml:"portSendMsg"`
 	PortVirtRcvMsg uint16                `yaml:"portVirtRcvMsg"`
-	Access         AccesscontrolUser     `yaml:"access"`
 	Handlers       map[string]HandlerCfg `yaml:"handlers"` // maps name to prefix
 
 	// just to have a place where to define anchors to alias to laster
@@ -23,9 +22,6 @@ type SignalServerCfg struct {
 func (c *SignalServerCfg) Validate() error {
 	if c.Dbus != signaldbus.SystemBus && c.Dbus != signaldbus.SessionBus {
 		return fmt.Errorf("Invalid dbus type")
-	}
-	if err := c.Access.Validate(); err != nil {
-		return err
 	}
 	for _, h := range c.Handlers {
 		if err := h.Validate(); err != nil {

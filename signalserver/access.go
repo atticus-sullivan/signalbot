@@ -1,63 +1,81 @@
 package signalserver
 
-import "fmt"
-
-// stores if the access is granted or blocked
-type Capability string
-
-const (
-	Allow Capability = "Allow"
-	Block Capability = "Block"
+import (
+	"errors"
+	"fmt"
+	"signalbot_go/internal/act"
 )
 
-// Capability is a stringer
-func (c Capability) String() string {
-	return string(c)
-}
+var ErrInvalidUser error = errors.New("Invalid User specified")
+var ErrInvalidChat error = errors.New("Invalid Chat specified")
+var ErrInvalidACTDepth error = errors.New("ACT has the wrong depth")
 
-// Accesscontol struct with Capabilities of a user
-// Can be parsed from a yaml file
-// TODO note on concurrency
-type AccesscontrolUser struct {
-	Def       Capability      `yaml:"default"`
-	AccessSet map[string]bool `yaml:"accessSet"`
-}
+type Accesscontrol act.ACT
 
 // Validate if stored information is valid
-func (a *AccesscontrolUser) Validate() error {
-	if a.Def != Allow && a.Def != Block {
-		return fmt.Errorf("Invalid default value: %v", a.Def)
+func (a *Accesscontrol) Validate() error {
+	if err := a.Default.Validate(); err != nil {
+		return err
 	}
-	for user := range a.AccessSet {
+	
+	for user,actA := range a.Children {
 		if !validPhoneNr(user) {
-			return fmt.Errorf("Invalid user: %v (must be a phoneNuber)", user)
+			return ErrInvalidUser
 		}
-	}
-	return nil
-}
 
-// Accesscontol struct with Capabilities of a user in a specific group/chat.
-// Can be parsed from a yaml file
-// TODO note on concurrency
-type AccesscontrolUserChat struct {
-	Def       Capability                 `yaml:"default"`
-	AccessSet map[string]map[string]bool `yaml:"accessSet"`
-}
-
-// Validate if stored information is valid
-func (a *AccesscontrolUserChat) Validate() error {
-	if a.Def != Allow && a.Def != Block {
-		return fmt.Errorf("Invalid default value: %v", a.Def)
-	}
-	for user, m := range a.AccessSet {
-		if !validPhoneNr(user) {
-			return fmt.Errorf("Invalid user: %v (must be a phoneNuber)", user)
+		if err := actA.Default.Validate(); err != nil {
+			return err
 		}
-		for chat := range m {
+		for chat,actB := range actA.Children {
 			if !validChat(chat) {
-				return fmt.Errorf("Invalid groupID/chat: %v (must be a hex-string or phoneNr for PNs)", chat)
+				return ErrInvalidChat
+			}
+
+			if err := actB.Default.Validate(); err != nil {
+				return err
+			}
+			if len(actB.Children) != 0 {
+				return ErrInvalidACTDepth
 			}
 		}
 	}
 	return nil
+}
+
+func (a *Accesscontrol) Check(user string, chat string) error {
+	actA, set := a.Children[user]
+	if !set {
+		if a.Default.Blocked() {
+			return fmt.Errorf("Not allowed. User: %s not set, default: %s", user, a.Default)
+		}
+		if a.Default.Allowed() {
+			return nil
+		}
+		// unset
+		return fmt.Errorf("Not allowed. User: %s not set, default unset", user)
+	}
+	actB, set := actA.Children[chat]
+	if !set {
+		def := actA.Default
+		if actA.Default.Unset() {
+			def = a.Default
+		}
+		if def.Blocked() {
+			return fmt.Errorf("Not allowed. User: %s Chat: %s not set, default: %s", user, chat, def)
+		}
+		if def.Allowed() {
+			return nil
+		}
+	}
+	def := actB.Default
+	if actB.Default.Unset() {
+		def = actA.Default
+	}
+	if def.Blocked() {
+		return fmt.Errorf("Not allowed. User: %s Chat: %s set but disallowed", user, chat)
+	}
+	if def.Allowed() {
+		return nil
+	}
+	return fmt.Errorf("Invalid ACT")
 }

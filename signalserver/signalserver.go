@@ -258,9 +258,6 @@ func (s *SignalServer) Close() {
 
 // handle a complete signalmessage
 func (s *SignalServer) handle(m *signaldbus.Message) {
-	if allow, set := s.Access.AccessSet[m.Sender]; (!set && s.Access.Def == Block) || (set && !allow) {
-		return
-	}
 	// unwrap -r
 	if m.Message == "-r" {
 		if m.GroupId != nil {
@@ -302,22 +299,13 @@ func (s *SignalServer) handleLine(m *signaldbus.Message) {
 			s.log.Warn(fmt.Sprintf("No handler found for module %v", module))
 			return
 		}
-		user_allow, set := handler.Access.AccessSet[m.Sender]
-		if !set && handler.Access.Def == Block {
-			s.log.Info(fmt.Sprintf("Accesscontrol blocked. Set: %v, Default: %v", set, handler.Access.Def))
-			return
+		chat := getChatId(m, s.self)
+		if len(m.GroupId) > 0 {
+			chat = hex.EncodeToString(m.GroupId)
 		}
-		// allow for all chats if no group set
-		if len(user_allow) > 0 {
-			chat := getChatId(m, s.self)
-			if len(m.GroupId) > 0 {
-				chat = hex.EncodeToString(m.GroupId)
-			}
-			allow, set := user_allow[chat]
-			if (!set && handler.Access.Def == Block) || (set && !allow) {
-				s.log.Info(fmt.Sprintf("Accesscontrol blocked. Set: %v, allow: %v, user: %v, chat: %v", set, allow, m.Sender, chat))
-				return
-			}
+		if err := handler.Access.Check(m.Sender, chat); err != nil {
+			s.log.Info("Accesscontrol blocked.", "Error", err)
+			return
 		}
 	}
 	// at this point the user is authorized for this module

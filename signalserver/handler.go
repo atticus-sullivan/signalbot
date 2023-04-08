@@ -19,7 +19,7 @@ type Handler interface {
 type HandlerCfg struct {
 	Prefixes []string              `yaml:"prefixes"`
 	Help     string                `yaml:"help"`
-	Access   AccesscontrolUserChat `yaml:"access"`
+	Access   Accesscontrol         `yaml:"access"`
 }
 
 // validate the stored data
