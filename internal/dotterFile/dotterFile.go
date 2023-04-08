@@ -23,14 +23,14 @@ func CreateFigure(d Dotter, dpi float64) (ofile attachments.File, err error) {
 		return nil, err
 	}
 	defer func() {
-		if err != nil {
+		if err != nil && ofile != nil {
 			ofile.Close()
 			ofile = nil
 		}
 	}()
 
 	// Ausführen des dot-Befehls mit der Pipe als Eingabe
-	cmd := exec.Command("dot", "-Tpng", "-o", ofile.Path(), "-Gdpi", strconv.FormatFloat(dpi, 'f', 2, 64))
+	cmd := exec.Command("dot", "-Tpng", "-o", ofile.Path(), "-Gdpi"+strconv.FormatFloat(dpi, 'f', 2, 64))
 
 	var p io.WriteCloser
 	p, err = cmd.StdinPipe()
@@ -39,18 +39,18 @@ func CreateFigure(d Dotter, dpi float64) (ofile attachments.File, err error) {
 	}
 
 	if err = cmd.Start(); err != nil {
-		return nil, err
+		return
 	}
 
 	if err = d.WriteDot(p); err != nil {
-		return nil, err
+		return
 	}
 	if err = p.Close(); err != nil {
-		return nil, err
+		return
 	}
 
 	if err = cmd.Wait(); err != nil {
-		return nil, err
+		return
 	}
 	return
 }
