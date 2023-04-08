@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"signalbot_go/modules/buechertreff"
 	"signalbot_go/modules/cmd"
+	"signalbot_go/modules/freezer"
 	"signalbot_go/modules/periodic"
 	"signalbot_go/modules/refectory"
 	"signalbot_go/modules/tv"
@@ -110,6 +111,11 @@ func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalSe
 			return nil, fmt.Errorf("'buechertreff' module: %v", err)
 		}
 	}
+	if _, ok := cfg.Handlers["freezer"]; ok {
+		if s.modules["freezer"], err = freezer.NewFreezer(log.With(), filepath.Join(cfgDir, "freezer")); err != nil {
+			return nil, fmt.Errorf("'freezer' module: %v", err)
+		}
+	}
 
 	// generate prefix2Module
 	s.prefix2module = make(map[string]string, len(s.Handlers))
@@ -131,11 +137,12 @@ func (s *SignalServer) Validate() error {
 	if err := s.SignalServerCfg.Validate(); err != nil {
 		return err
 	}
-	for name := range s.Handlers {
-		if _, ok := s.modules[name]; !ok {
-			return fmt.Errorf("Trying to register unknown module: %v", name)
-		}
-	}
+	// TODO
+	// for name := range s.Handlers {
+	// 	if _, ok := s.modules[name]; !ok {
+	// 		return fmt.Errorf("Trying to register unknown module: %v", name)
+	// 	}
+	// }
 	return nil
 }
 
