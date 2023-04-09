@@ -191,6 +191,11 @@ func (t *Tv) format(target time.Time, postOrig uint) (string, error) {
 			sNew := s
 			last = &sNew
 		}
+		if post != 0 {
+			builder.WriteString(last.String())
+			builder.WriteRune('\n')
+			post--
+		}
 	}
 	return builder.String(), nil
 }
