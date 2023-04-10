@@ -133,6 +133,7 @@ func (r *Fernsehserien) Handle(m *signaldbus.Message, signal signalsender.Signal
 	}
 	if args.Insert != "" {
 		r.Series[args.Which] = args.Insert
+		r.Aliases["all"] = append(r.Aliases["all"], args.Insert)
 	}
 
 	urls := make(map[string]string)
