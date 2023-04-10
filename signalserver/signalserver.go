@@ -82,6 +82,12 @@ func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalSe
 	}
 
 	// todoMod register modules
+	if _, ok := cfg.Handlers["help"]; ok {
+		if s.modules["help"], err = NewHelp(log.With(), filepath.Join(cfgDir, "help"), s.Handlers, s.self); err != nil {
+			return nil, fmt.Errorf("'help' module: %v", err)
+		}
+	}
+
 	if _, ok := cfg.Handlers["cmd"]; ok {
 		if s.modules["cmd"], err = cmd.NewCmd(log.With(), filepath.Join(cfgDir, "cmd")); err != nil {
 			return nil, fmt.Errorf("'cmd' module: %v", err)
