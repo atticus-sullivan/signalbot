@@ -191,4 +191,14 @@ func (r *Fernsehserien) Start(virtRcv func(*signaldbus.Message)) error {
 }
 
 func (r *Fernsehserien) Close(virtRcv func(*signaldbus.Message)) {
+	delete(r.Aliases, "all")
+	f, err := os.Create(filepath.Join(r.ConfigDir, "fernsehserien.yaml"))
+	if err != nil {
+		r.log.Error(fmt.Sprintf("Error opening 'buechertreff.yaml': %v", err))
+	}
+	e := yaml.NewEncoder(f)
+	err = e.Encode(r)
+	if err != nil {
+		r.log.Error(fmt.Sprintf("Error endcoding to 'buechertreff.yaml': %v", err))
+	}
 }
