@@ -12,19 +12,26 @@ import (
 )
 
 type sending struct {
-	date time.Time
-	sender string
-	name string
+	Date time.Time `yaml:"date"`
+	Sender string `yaml:"sender"`
+	Name string `yaml:"name"`
+}
+
+func (b sending) AddString() string {
+	return "> " + b.String()
+}
+func (b sending) RemString() string {
+	return "< " + b.String()
 }
 
 func (b sending) String() string {
 	builder := strings.Builder{}
 
-	builder.WriteString(b.date.Format("2006-01-02 15:04"))
+	builder.WriteString(b.Date.Format("2006-01-02 15:04"))
 	builder.WriteString(": ")
-	builder.WriteString(b.name)
+	builder.WriteString(b.Name)
 	builder.WriteString(" -> ")
-	builder.WriteString(b.sender)
+	builder.WriteString(b.Sender)
 
 	return builder.String()
 }
@@ -99,15 +106,15 @@ func Get(urls map[string]string, unavailableSenders map[string]bool) (sendings, 
 			}
 
 			it := sending{
-				name: name,
-				date: date,
-				sender: sender,
+				Name: name,
+				Date: date,
+				Sender: sender,
 			}
 			ret = append(ret, it)
 		}
 	}
 	sort.Slice(ret, func(i, j int) bool {
-		return ret[i].date.Before(ret[j].date)
+		return ret[i].Date.Before(ret[j].Date)
 	})
 	return ret, nil
 }

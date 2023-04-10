@@ -130,7 +130,7 @@ func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalSe
 		}
 	}
 	if _, ok := cfg.Handlers["fernsehserien"]; ok {
-		if s.modules["fernsehserien"], err = fernsehserien.NewFernsehserien(log.With(), filepath.Join(cfgDir, "fernsehserien")); err != nil {
+		if s.modules["fernsehserien"], err = fernsehserien.NewFernsehserien(log.With(), filepath.Join(cfgDir, "fernsehserien"), func(m *signaldbus.Message) string {return getChatId(m, s.self)}); err != nil {
 			return nil, fmt.Errorf("'fernsehserien' module: %v", err)
 		}
 	}

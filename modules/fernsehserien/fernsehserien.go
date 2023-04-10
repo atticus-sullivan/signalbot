@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	cmdsplit "signalbot_go/internal/cmdSplit"
+	"signalbot_go/internal/differ"
 	"signalbot_go/internal/signalsender"
 	"signalbot_go/signaldbus"
 	"sort"
@@ -23,12 +24,16 @@ type Fernsehserien struct {
 	Series      map[string]string   `yaml:"series"`
 	Aliases     map[string][]string `yaml:"aliases"`
 	UnavailableSenders map[string]bool `yaml:"unavailableSenders"`
+	Lasts differ.Differ[string,string,sending] `yaml:"lasts"` // stores last chat->user->sending
+	getChat func(m *signaldbus.Message) string
 }
 
-func NewFernsehserien(log *slog.Logger, cfgDir string) (*Fernsehserien, error) {
+func NewFernsehserien(log *slog.Logger, cfgDir string, getChat func(m *signaldbus.Message) string) (*Fernsehserien, error) {
 	r := Fernsehserien{
 		log:       log,
 		ConfigDir: cfgDir,
+		getChat: getChat,
+		Lasts: make(differ.Differ[string,string,sending]),
 	}
 
 	f, err := os.Open(filepath.Join(r.ConfigDir, "fernsehserien.yaml"))
@@ -80,6 +85,8 @@ type Args struct {
 	Which  string `arg:"positional"`
 	Insert string `arg:"-i,--insert"`
 	Quiet  bool    `arg:"-q,--quiet" default:"false"`
+	Diff   bool    `arg:"--diff" default:"false"`
+	Data   bool    `arg:"-d,--data" default:"true"`
 }
 
 func (r *Fernsehserien) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
@@ -137,8 +144,10 @@ func (r *Fernsehserien) Handle(m *signaldbus.Message, signal signalsender.Signal
 	}
 
 	urls := make(map[string]string)
+	chat := r.getChat(m)
 	if args.Which == "all" {
 		urls = r.Series
+		chat += "L" // different diffing for "all" command
 	} else {
 		resolvedL, ok := r.Aliases[args.Which]
 		if !ok {
@@ -169,17 +178,32 @@ func (r *Fernsehserien) Handle(m *signaldbus.Message, signal signalsender.Signal
 		r.sendError(m, signal, errMsg)
 		return
 	}
-	var resp string
-	if len(items) <= 0 {
+
+	
+	resp := strings.Builder{}
+	if args.Data {
+		resp.WriteString(items.String())
+	}
+	if args.Data && args.Diff {
+		resp.WriteRune('\n')
+	}
+	if args.Diff {
+		d := r.Lasts.DiffStore(chat, m.Sender, items)
+		if d != "" {
+			resp.WriteString("Diff:\n")
+			resp.WriteString(d)
+		}
+	}
+	respS := resp.String()
+
+	if respS == "" {
 		if args.Quiet {
 			return
 		}
-		resp = "Nothing found"
-	} else {
-		resp = items.String()
+		respS = "No data/changes"
 	}
 
-	_, err = signal.Respond(resp, []string{}, m)
+	_, err = signal.Respond(respS, []string{}, m)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error: %v", err)
 		r.log.Error(errMsg)
@@ -192,7 +216,7 @@ func (r *Fernsehserien) Start(virtRcv func(*signaldbus.Message)) error {
 }
 
 func (r *Fernsehserien) Close(virtRcv func(*signaldbus.Message)) {
-	delete(r.Aliases, "all")
+	delete(r.Aliases, "all") // "all" alias is always a generated one
 	f, err := os.Create(filepath.Join(r.ConfigDir, "fernsehserien.yaml"))
 	if err != nil {
 		r.log.Error(fmt.Sprintf("Error opening 'buechertreff.yaml': %v", err))
