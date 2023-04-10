@@ -9,6 +9,8 @@ import (
 	cmdsplit "signalbot_go/internal/cmdSplit"
 	"signalbot_go/internal/signalsender"
 	"signalbot_go/signaldbus"
+	"sort"
+	"strings"
 
 	"github.com/alexflint/go-arg"
 	"golang.org/x/exp/slog"
@@ -121,7 +123,17 @@ func (b *Buechertreff) Handle(m *signaldbus.Message, signal signalsender.SignalS
 	if !ok {
 		errMsg := fmt.Sprintf("Error: %v is unknown", args.Which)
 		b.log.Error(errMsg)
-		b.sendError(m, signal, errMsg)
+		builder := strings.Builder{}
+		builder.WriteString(errMsg)
+		builder.WriteRune('\n')
+		builder.WriteString("Available series: ")
+		sorted := make(sort.StringSlice, 0, len(b.Series))
+		for k := range b.Series {
+			sorted = append(sorted, k)
+		}
+		sorted.Sort()
+		builder.WriteString(strings.Join(sorted, ", "))
+		b.sendError(m, signal, builder.String())
 		return
 	}
 

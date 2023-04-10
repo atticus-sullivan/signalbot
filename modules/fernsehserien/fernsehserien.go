@@ -9,6 +9,8 @@ import (
 	cmdsplit "signalbot_go/internal/cmdSplit"
 	"signalbot_go/internal/signalsender"
 	"signalbot_go/signaldbus"
+	"sort"
+	"strings"
 
 	"github.com/alexflint/go-arg"
 	"golang.org/x/exp/slog"
@@ -141,7 +143,18 @@ func (r *Fernsehserien) Handle(m *signaldbus.Message, signal signalsender.Signal
 		if !ok {
 			errMsg := fmt.Sprintf("Error: %v is unknown", args.Which)
 			r.log.Error(errMsg)
-			r.sendError(m, signal, errMsg)
+			builder := strings.Builder{}
+			builder.WriteString(errMsg)
+			builder.WriteRune('\n')
+			builder.WriteString("Available series: ")
+			sorted := make(sort.StringSlice, 0, len(r.Aliases))
+			for k := range r.Aliases {
+				sorted = append(sorted, k)
+			}
+			sorted.Sort()
+			builder.WriteString(strings.Join(sorted, ", "))
+			r.sendError(m, signal, builder.String())
+			return
 		}
 		for _,re := range resolvedL {
 			urls[re] = r.Series[re]
