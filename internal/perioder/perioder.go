@@ -55,8 +55,14 @@ type PerioderImpl[T any] struct {
 }
 
 func NewPerioderImpl[T any](log *slog.Logger) *PerioderImpl[T] {
-	c := make(chan ReocEvent[T], 3)
-	p := PerioderImpl[T]{add_r: c, add_s: c, log: log, events: make(map[uint]ReocEvent[T])}
+	cAdd := make(chan ReocEvent[T], 3)
+	cRem := make(chan uint)
+	p := PerioderImpl[T]{
+		add_r: cAdd, add_s: cAdd,
+		rem_r: cRem, rem_s: cRem,
+		log: log,
+		events: make(map[uint]ReocEvent[T]),
+	}
 
 	return &p
 }

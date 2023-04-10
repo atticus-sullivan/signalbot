@@ -130,59 +130,6 @@ func (p *Periodic) Handle(m *signaldbus.Message, signal signalsender.SignalSende
 	}
 }
 
-func (p *Periodic) Start(virtRcv func(*signaldbus.Message)) error {
-	// start perioder
-	var ctx context.Context
-	ctx, p.stop = context.WithCancel(context.Background())
-	go p.perioder.Start(ctx)
-
-	// read saved events
-	f, err := os.Open(filepath.Join(p.ConfigDir, "events.yaml"))
-	if !os.IsNotExist(err) {
-		if err != nil {
-			// p.Log.Error(fmt.Sprintf("periodic module: Error opening 'events.yaml': %v", err))
-			return err
-		}
-		d := yaml.NewDecoder(f)
-		events := make(map[uint]perioder.ReocEventImplDeadline[signaldbus.Message])
-		err = d.Decode(&events)
-		if err != nil {
-			// p.Log.Error(fmt.Sprintf("periodic module: Error decoding to 'events.yaml': %v", err))
-			return err
-		}
-		// add events
-		for _, v := range events {
-			v.Foo = func(time time.Time, event perioder.ReocEvent[signaldbus.Message]) {
-				meta := event.Metadata()
-				virtRcv(&meta)
-			}
-			if v.Stop.IsZero() {
-				p.perioder.Add(&v.ReocEventImpl)
-			} else {
-				p.perioder.Add(&v)
-			}
-		}
-	}
-	return nil
-}
-
-func (p *Periodic) Close(virtRcv func(*signaldbus.Message)) {
-	p.Log.Info("closing periodic stuff")
-	f, err := os.Create(filepath.Join(p.ConfigDir, "events.yaml"))
-	if err != nil {
-		p.Log.Error(fmt.Sprintf("periodic module: Error opening 'events.yaml': %v", err))
-	}
-	e := yaml.NewEncoder(f)
-	events := p.perioder.Events()
-	// fmt.Println(events)
-	err = e.Encode(events)
-	if err != nil {
-		p.Log.Error(fmt.Sprintf("periodic module: Error endcoding to 'events.yaml': %v", err))
-	}
-
-	p.stop()
-}
-
 func (p *Periodic) Add(add *addArgs, m signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
 	if add.Every == time.Duration(0) {
 		errMsg := fmt.Sprintf("periodic module: Invalid duration: %v", add.Every)
@@ -246,4 +193,57 @@ func (p *Periodic) Rm(rm *rmArgs, m signaldbus.Message, signal signalsender.Sign
 	if _, err := signal.Respond(fmt.Sprintf("Removed %v\n", event.String()), nil, &m); err != nil {
 		p.Log.Error(fmt.Sprintf("periodic module: error sending rm success msg: %v", err))
 	}
+}
+
+func (p *Periodic) Start(virtRcv func(*signaldbus.Message)) error {
+	// start perioder
+	var ctx context.Context
+	ctx, p.stop = context.WithCancel(context.Background())
+	go p.perioder.Start(ctx)
+
+	// read saved events
+	f, err := os.Open(filepath.Join(p.ConfigDir, "events.yaml"))
+	if !os.IsNotExist(err) {
+		if err != nil {
+			// p.Log.Error(fmt.Sprintf("periodic module: Error opening 'events.yaml': %v", err))
+			return err
+		}
+		d := yaml.NewDecoder(f)
+		events := make(map[uint]perioder.ReocEventImplDeadline[signaldbus.Message])
+		err = d.Decode(&events)
+		if err != nil {
+			// p.Log.Error(fmt.Sprintf("periodic module: Error decoding to 'events.yaml': %v", err))
+			return err
+		}
+		// add events
+		for _, vIter := range events {
+			v := vIter // force copy
+			v.Foo = func(time time.Time, event perioder.ReocEvent[signaldbus.Message]) {
+				meta := event.Metadata()
+				virtRcv(&meta)
+			}
+			if v.Stop.IsZero() {
+				p.perioder.Add(&v.ReocEventImpl)
+			} else {
+				p.perioder.Add(&v)
+			}
+		}
+	}
+	return nil
+}
+
+func (p *Periodic) Close(virtRcv func(*signaldbus.Message)) {
+	p.Log.Info("closing periodic stuff")
+	f, err := os.Create(filepath.Join(p.ConfigDir, "events.yaml"))
+	if err != nil {
+		p.Log.Error(fmt.Sprintf("periodic module: Error opening 'events.yaml': %v", err))
+	}
+	e := yaml.NewEncoder(f)
+	events := p.perioder.Events()
+	err = e.Encode(events)
+	if err != nil {
+		p.Log.Error(fmt.Sprintf("periodic module: Error endcoding to 'events.yaml': %v", err))
+	}
+
+	p.stop()
 }
