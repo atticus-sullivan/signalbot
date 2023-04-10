@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"signalbot_go/modules/buechertreff"
 	"signalbot_go/modules/cmd"
+	"signalbot_go/modules/fernsehserien"
 	"signalbot_go/modules/freezer"
 	"signalbot_go/modules/influx"
 	"signalbot_go/modules/periodic"
@@ -126,6 +127,11 @@ func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalSe
 	if _, ok := cfg.Handlers["influx"]; ok {
 		if s.modules["influx"], err = influx.NewInflux(log.With(), filepath.Join(cfgDir, "influx")); err != nil {
 			return nil, fmt.Errorf("'influx' module: %v", err)
+		}
+	}
+	if _, ok := cfg.Handlers["fernsehserien"]; ok {
+		if s.modules["fernsehserien"], err = fernsehserien.NewFernsehserien(log.With(), filepath.Join(cfgDir, "fernsehserien")); err != nil {
+			return nil, fmt.Errorf("'fernsehserien' module: %v", err)
 		}
 	}
 
