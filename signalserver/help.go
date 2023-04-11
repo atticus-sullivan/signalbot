@@ -1,7 +1,6 @@
 package signalserver
 
 import (
-	"encoding/hex"
 	"fmt"
 	"signalbot_go/internal/signalsender"
 	"signalbot_go/signaldbus"
@@ -60,11 +59,7 @@ func (r *Help) Handle(m *signaldbus.Message, signal signalsender.SignalSender, v
 	var err error
 	builder := strings.Builder{}
 	for _,handler := range r.Handlers {
-		chat := getChatId(m, r.self)
-		if len(m.GroupId) > 0 {
-			chat = hex.EncodeToString(m.GroupId)
-		}
-		if err := handler.Access.Check(m.Sender, chat); err != nil {
+		if err := handler.Access.Check(m.Sender, m.Chat); err != nil {
 			continue
 		}
 		builder.WriteString(strings.Join(handler.Prefixes, ","))

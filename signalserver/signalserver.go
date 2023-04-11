@@ -6,7 +6,6 @@ package signalserver
 import (
 	"bufio"
 	"context"
-	"encoding/hex"
 	"fmt"
 	"net"
 	"os"
@@ -130,7 +129,7 @@ func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalSe
 		}
 	}
 	if _, ok := cfg.Handlers["fernsehserien"]; ok {
-		if s.modules["fernsehserien"], err = fernsehserien.NewFernsehserien(log.With(), filepath.Join(cfgDir, "fernsehserien"), func(m *signaldbus.Message) string {return getChatId(m, s.self)}); err != nil {
+		if s.modules["fernsehserien"], err = fernsehserien.NewFernsehserien(log.With(), filepath.Join(cfgDir, "fernsehserien")); err != nil {
 			return nil, fmt.Errorf("'fernsehserien' module: %v", err)
 		}
 	}
@@ -184,7 +183,7 @@ func (s *SignalServer) startPortSendMsg(ctx context.Context) error {
 				s.log.Info(fmt.Sprintf("SendMsg: Connected with %s", conn.RemoteAddr().String()))
 				go func(conn net.Conn) {
 					defer conn.Close()
-					m, err := signaldbus.NewMessageFromReader(conn)
+					m, err := signaldbus.NewMessageFromReader(conn, s.self)
 					if err != nil || m == nil {
 						s.log.Error("SendMsg: Error on reading message from socket", "error", err)
 					}
@@ -220,7 +219,7 @@ func (s *SignalServer) startPortVirtRcv(ctx context.Context) error {
 				s.log.Info(fmt.Sprintf("VirtRcv: Connected with %s", conn.RemoteAddr().String()))
 				go func(conn net.Conn) {
 					defer conn.Close()
-					m, err := signaldbus.NewMessageFromReader(conn)
+					m, err := signaldbus.NewMessageFromReader(conn, s.self)
 					if err != nil || m == nil {
 						s.log.Error("VirtRcv: Error on reading message from socket", "error", err)
 					}
@@ -317,11 +316,7 @@ func (s *SignalServer) handleLine(m *signaldbus.Message) {
 			s.log.Warn(fmt.Sprintf("No handler found for module %v", module))
 			return
 		}
-		chat := getChatId(m, s.self)
-		if len(m.GroupId) > 0 {
-			chat = hex.EncodeToString(m.GroupId)
-		}
-		if err := handler.Access.Check(m.Sender, chat); err != nil {
+		if err := handler.Access.Check(m.Sender, m.Chat); err != nil {
 			s.log.Info("Accesscontrol blocked.", "Error", err)
 			return
 		}

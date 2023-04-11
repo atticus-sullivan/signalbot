@@ -2,9 +2,7 @@ package signalserver
 
 import (
 	"bytes"
-	"encoding/hex"
 	"regexp"
-	"signalbot_go/signaldbus"
 )
 
 // dropCR drops a terminal \r from the data.
@@ -51,14 +49,4 @@ func validHexstring(hex string) bool {
 
 func validChat(chat string) bool {
 	return validHexstring(chat) || validPhoneNr(chat)
-}
-
-func getChatId(m *signaldbus.Message, self string) string {
-	if len(m.GroupId) > 0 {
-		return hex.EncodeToString(m.GroupId)
-	}
-	if m.Sender == self {
-		return m.Receiver
-	}
-	return m.Sender
 }

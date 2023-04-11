@@ -24,10 +24,9 @@ type Fernsehserien struct {
 	Aliases            map[string][]string                    `yaml:"aliases"`
 	UnavailableSenders map[string]bool                        `yaml:"unavailableSenders"`
 	Lasts              differ.Differ[string, string, sending] `yaml:"lasts"` // stores last chat->user->sending
-	getChat            func(m *signaldbus.Message) string
 }
 
-func NewFernsehserien(log *slog.Logger, cfgDir string, getChat func(m *signaldbus.Message) string) (*Fernsehserien, error) {
+func NewFernsehserien(log *slog.Logger, cfgDir string) (*Fernsehserien, error) {
 	r := Fernsehserien{
 		Module:  modules.NewModule(log, cfgDir),
 		Lasts:   make(differ.Differ[string, string, sending]),
@@ -104,7 +103,7 @@ func (r *Fernsehserien) Handle(m *signaldbus.Message, signal signalsender.Signal
 	}
 
 	urls := make(map[string]string)
-	chat := r.getChat(m)
+	chat := m.Chat
 	if args.Which == "all" {
 		urls = r.Series
 		chat += "L" // different diffing for "all" command

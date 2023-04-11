@@ -113,6 +113,9 @@ type Message struct {
 	// Byte array representing the internal group identifier (empty when
 	// private message)
 	GroupId []byte `yaml:"gid,flow"`
+	// Either the hex representation of the chat or the phonenumber identifying
+	// the chat (usually the sender, or on sync messages the receiver)
+	Chat string `yaml:"chat"`
 	// Message text
 	Message string `yaml:"msg"`
 	// String array of filenames in the signal-cli storage
@@ -153,6 +156,16 @@ func NewSyncMessage(v *dbus.Signal, self string) *SyncMessage {
 		Destination: v.Body[2].(string),
 	}
 	msg.Message.Receiver = msg.Destination
+
+	// fill chat
+	if len(msg.GroupId) > 0 {
+		msg.Chat = hex.EncodeToString(msg.GroupId)
+	}
+	if msg.Sender == self {
+		msg.Chat = msg.Receiver
+	}
+	msg.Chat = msg.Sender
+
 	return &msg
 }
 
@@ -173,10 +186,20 @@ func NewMessage(v *dbus.Signal, self string) *Message {
 		Attachments: v.Body[4].([]string),
 	}
 	msg.Receiver = self
+
+	// fill chat
+	if len(msg.GroupId) > 0 {
+		msg.Chat = hex.EncodeToString(msg.GroupId)
+	}
+	if msg.Sender == self {
+		msg.Chat = msg.Receiver
+	}
+	msg.Chat = msg.Sender
+
 	return &msg
 }
 
-func NewMessageFromReader(r io.Reader) (*Message, error) {
+func NewMessageFromReader(r io.Reader, self string) (*Message, error) {
 	rb := bufio.NewReader(r)
 
 	gidB, err := rb.ReadBytes('\n')
@@ -219,6 +242,15 @@ func NewMessageFromReader(r io.Reader) (*Message, error) {
 	if len(receiver) != 0 {
 		m.Receiver = strings.TrimSpace(string(receiver))
 	}
+
+	// fill chat
+	if len(m.GroupId) > 0 {
+		m.Chat = hex.EncodeToString(m.GroupId)
+	}
+	if m.Sender == self {
+		m.Chat = m.Receiver
+	}
+	m.Chat = m.Sender
 
 	return &m, nil
 }
