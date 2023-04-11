@@ -76,7 +76,7 @@ func (r *Fernsehserien) Validate() error {
 }
 
 func (r *Fernsehserien) sendError(m *signaldbus.Message, signal signalsender.SignalSender, reply string) {
-	if _, err := signal.Respond(reply, nil, m); err != nil {
+	if _, err := signal.Respond(reply, nil, m, false); err != nil {
 		r.log.Error(fmt.Sprintf("Error responding to %v", m))
 	}
 }
@@ -203,7 +203,7 @@ func (r *Fernsehserien) Handle(m *signaldbus.Message, signal signalsender.Signal
 		respS = "No data/changes"
 	}
 
-	_, err = signal.Respond(respS, []string{}, m)
+	_, err = signal.Respond(respS, []string{}, m, true)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error: %v", err)
 		r.log.Error(errMsg)

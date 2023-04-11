@@ -189,7 +189,7 @@ func (s *SignalServer) startPortSendMsg(ctx context.Context) error {
 						s.log.Error("SendMsg: Error on reading message from socket", "error", err)
 					}
 					s.log.Info(fmt.Sprintf("SendMsg: received: %v", m))
-					_, err = s.acc.SendGeneric(m.Message, m.Attachments, m.Sender, m.GroupId)
+					_, err = s.acc.SendGeneric(m.Message, m.Attachments, m.Sender, m.GroupId, false)
 					if err != nil {
 						s.log.Error("SendMsg: Error on sending message", "error", err)
 					}

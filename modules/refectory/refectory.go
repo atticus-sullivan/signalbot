@@ -70,7 +70,7 @@ func (r *Refectory) Validate() error {
 }
 
 func (r *Refectory) sendError(m *signaldbus.Message, signal signalsender.SignalSender, reply string) {
-	if _, err := signal.Respond(reply, nil, m); err != nil {
+	if _, err := signal.Respond(reply, nil, m, false); err != nil {
 		r.log.Error(fmt.Sprintf("Error responding to %v", m))
 	}
 }
@@ -154,7 +154,7 @@ func (r *Refectory) Handle(m *signaldbus.Message, signal signalsender.SignalSend
 				}
 				continue
 			}
-			_, err = signal.Respond(menuS, []string{}, m)
+			_, err = signal.Respond(menuS, []string{}, m, true)
 			if err != nil {
 				errMsg := fmt.Sprintf("Error: %v", err)
 				r.log.Error(errMsg)

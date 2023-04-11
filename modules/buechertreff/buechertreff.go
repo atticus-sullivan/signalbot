@@ -56,7 +56,7 @@ func (b *Buechertreff) Validate() error {
 }
 
 func (b *Buechertreff) sendError(m *signaldbus.Message, signal signalsender.SignalSender, reply string) {
-	if _, err := signal.Respond(reply, nil, m); err != nil {
+	if _, err := signal.Respond(reply, nil, m, false); err != nil {
 		b.log.Error(fmt.Sprintf("Error responding to %v", m))
 	}
 }
@@ -145,7 +145,7 @@ func (b *Buechertreff) Handle(m *signaldbus.Message, signal signalsender.SignalS
 		return
 	}
 
-	_, err = signal.Respond(items.String(), []string{}, m)
+	_, err = signal.Respond(items.String(), []string{}, m, true)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error: %v", err)
 		b.log.Error(errMsg)

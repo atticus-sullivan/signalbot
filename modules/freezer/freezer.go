@@ -62,7 +62,7 @@ func (f *Freezer) Validate() error {
 }
 
 func (f *Freezer) sendError(m *signaldbus.Message, signal signalsender.SignalSender, reply string) {
-	if _, err := signal.Respond(reply, nil, m); err != nil {
+	if _, err := signal.Respond(reply, nil, m, false); err != nil {
 		f.log.Error(fmt.Sprintf("Error responding to %v", m))
 	}
 }
@@ -145,7 +145,7 @@ func (f *Freezer) Handle(m *signaldbus.Message, signal signalsender.SignalSender
 			f.sendError(m, signal, errMsg)
 			return
 		}
-		_, err = signal.Respond("", att, m)
+		_, err = signal.Respond("", att, m, true)
 		if err != nil {
 			errMsg := fmt.Sprintf("Error: %v", err)
 			f.log.Error(errMsg)

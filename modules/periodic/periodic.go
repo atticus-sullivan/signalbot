@@ -40,7 +40,7 @@ func (p *Periodic) Validate() error {
 
 // shortcut for sending an error via signal. If this fails log error.
 func (p *Periodic) sendError(m *signaldbus.Message, signal signalsender.SignalSender, reply string) {
-	if _, err := signal.Respond(reply, nil, m); err != nil {
+	if _, err := signal.Respond(reply, nil, m, false); err != nil {
 		p.Log.Error(fmt.Sprintf("Error responding to %v", m))
 	}
 }
@@ -161,7 +161,7 @@ func (p *Periodic) Add(add *addArgs, m signaldbus.Message, signal signalsender.S
 		})
 	}
 	p.perioder.Add(event)
-	if _, err := signal.Respond(fmt.Sprintf("Added %v\n", event.String()), nil, &m); err != nil {
+	if _, err := signal.Respond(fmt.Sprintf("Added %v\n", event.String()), nil, &m, true); err != nil {
 		p.Log.Error(fmt.Sprintf("periodic module: error sending add success msg: %v", err))
 	}
 }
@@ -174,7 +174,7 @@ func (p *Periodic) Ls(ls *lsArgs, m signaldbus.Message, signal signalsender.Sign
 			events[k] = v
 		}
 	}
-	if _, err := signal.Respond(fmt.Sprintf("%v\n", events), nil, &m); err != nil {
+	if _, err := signal.Respond(fmt.Sprintf("%v\n", events), nil, &m, true); err != nil {
 		p.Log.Error(fmt.Sprintf("periodic module: error sending ls output: %v", err))
 	}
 }
@@ -190,7 +190,7 @@ func (p *Periodic) Rm(rm *rmArgs, m signaldbus.Message, signal signalsender.Sign
 	p.Log.Info(fmt.Sprintf("periodic module: canceling event with ID: %d (%s)", rm.Id, event.String()))
 	p.perioder.Remove(rm.Id)
 	event.Cancel()
-	if _, err := signal.Respond(fmt.Sprintf("Removed %v\n", event.String()), nil, &m); err != nil {
+	if _, err := signal.Respond(fmt.Sprintf("Removed %v\n", event.String()), nil, &m, true); err != nil {
 		p.Log.Error(fmt.Sprintf("periodic module: error sending rm success msg: %v", err))
 	}
 }

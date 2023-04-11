@@ -76,7 +76,7 @@ func (c *Cmd) Validate() error {
 
 // shortcut for sending an error via signal. If this fails log error.
 func (c *Cmd) sendError(m *signaldbus.Message, signal signalsender.SignalSender, reply string) {
-	if _, err := signal.Respond(reply, nil, m); err != nil {
+	if _, err := signal.Respond(reply, nil, m, false); err != nil {
 		c.Log.Error(fmt.Sprintf("Error responding to %v", m))
 	}
 }
@@ -112,13 +112,13 @@ func (c *Cmd) Handle(m *signaldbus.Message, signal signalsender.SignalSender, vi
 		}
 
 		c.Log.Info(fmt.Sprintf("Command returned successfully. Output:\n%s", output))
-		_, err = signal.Respond(string(output), nil, m)
+		_, err = signal.Respond(string(output), nil, m, true)
 		if err != nil {
 			c.Log.Error(fmt.Sprintf("Failed to send reply to %v", m))
 		}
 
 	} else {
-		_, err := signal.Respond("Invalid command", nil, m)
+		_, err := signal.Respond("Invalid command", nil, m, false)
 		if err != nil {
 			c.Log.Error(fmt.Sprintf("Failed to send reply to %v", m))
 		}

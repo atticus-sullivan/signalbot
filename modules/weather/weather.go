@@ -80,7 +80,7 @@ func (w *Weather) Validate() error {
 }
 
 func (w *Weather) sendError(m *signaldbus.Message, signal signalsender.SignalSender, reply string) {
-	if _, err := signal.Respond(reply, nil, m); err != nil {
+	if _, err := signal.Respond(reply, nil, m, false); err != nil {
 		w.log.Error(fmt.Sprintf("Error responding to %v", m))
 	}
 }
@@ -175,7 +175,7 @@ func (w *Weather) Handle(m *signaldbus.Message, signal signalsender.SignalSender
 			w.sendError(m, signal, errMsg)
 			return
 		}
-		_, err = signal.Respond(resp, []string{}, m)
+		_, err = signal.Respond(resp, []string{}, m, true)
 		if err != nil {
 			errMsg := fmt.Sprintf("openweather Error: %v", err)
 			w.log.Error(errMsg)

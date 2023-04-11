@@ -70,7 +70,7 @@ func (t *Tv) Validate() error {
 }
 
 func (t *Tv) sendError(m *signaldbus.Message, signal signalsender.SignalSender, reply string) {
-	if _, err := signal.Respond(reply, nil, m); err != nil {
+	if _, err := signal.Respond(reply, nil, m, false); err != nil {
 		t.log.Error(fmt.Sprintf("Error responding to %v", m))
 	}
 }
@@ -149,7 +149,7 @@ func (t *Tv) Handle(m *signaldbus.Message, signal signalsender.SignalSender, vir
 			return
 		}
 
-		_, err = signal.Respond(out, []string{}, m)
+		_, err = signal.Respond(out, []string{}, m, true)
 		if err != nil {
 			errMsg := fmt.Sprintf("Error: %v", err)
 			t.log.Error(errMsg)
