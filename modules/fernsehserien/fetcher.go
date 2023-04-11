@@ -12,9 +12,9 @@ import (
 )
 
 type sending struct {
-	Date time.Time `yaml:"date"`
-	Sender string `yaml:"sender"`
-	Name string `yaml:"name"`
+	Date   time.Time `yaml:"date"`
+	Sender string    `yaml:"sender"`
+	Name   string    `yaml:"name"`
 }
 
 func (b sending) AddString() string {
@@ -37,11 +37,12 @@ func (b sending) String() string {
 }
 
 type sendings []sending
+
 func (b sendings) String() string {
 	builder := strings.Builder{}
 
 	first := true
-	for _,i := range b {
+	for _, i := range b {
 		if !first {
 			builder.WriteRune('\n')
 		} else {
@@ -54,11 +55,14 @@ func (b sendings) String() string {
 	return builder.String()
 }
 
-func Get(urls map[string]string, unavailableSenders map[string]bool) (sendings, error) {
+type Fetcher struct {
+}
+
+func (f *Fetcher) get(urls map[string]string, unavailableSenders map[string]bool) (sendings, error) {
 	var ret sendings
 	var ret_old sendings
 	for name, url := range urls {
-		resp,err := http.Get(url)
+		resp, err := http.Get(url)
 		if err != nil {
 			return nil, err
 		}
@@ -67,7 +71,7 @@ func Get(urls map[string]string, unavailableSenders map[string]bool) (sendings, 
 			return nil, fmt.Errorf("")
 		}
 
-		root,err := html.Parse(resp.Body)
+		root, err := html.Parse(resp.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -75,11 +79,11 @@ func Get(urls map[string]string, unavailableSenders map[string]bool) (sendings, 
 		items := cascadia.QueryAll(root, cascadia.MustCompile("[itemtype=\"http://schema.org/BroadcastEvent\"]:not(.termin-vergangenheit)"))
 		ret, ret_old = make(sendings, len(ret), len(ret)+len(items)), ret
 		copy(ret, ret_old)
-		for _,i := range items {
+		for _, i := range items {
 
 			dateN := cascadia.Query(i, cascadia.MustCompile("[itemprop=\"startDate\"]"))
 			var date time.Time
-			for _,attr := range dateN.Attr {
+			for _, attr := range dateN.Attr {
 				if attr.Key == "datetime" {
 					date, err = time.Parse(time.RFC3339, attr.Val)
 					if err != nil {
@@ -93,7 +97,7 @@ func Get(urls map[string]string, unavailableSenders map[string]bool) (sendings, 
 
 			senderN := cascadia.Query(i, cascadia.MustCompile("[itemprop=\"name\"]"))
 			var sender string
-			for _,attr := range senderN.Attr {
+			for _, attr := range senderN.Attr {
 				if attr.Key == "content" {
 					sender = attr.Val
 				}
@@ -101,13 +105,13 @@ func Get(urls map[string]string, unavailableSenders map[string]bool) (sendings, 
 			if sender == "" {
 				return nil, fmt.Errorf("")
 			}
-			if val,unavailable := unavailableSenders[sender]; unavailable && val {
+			if val, unavailable := unavailableSenders[sender]; unavailable && val {
 				continue
 			}
 
 			it := sending{
-				Name: name,
-				Date: date,
+				Name:   name,
+				Date:   date,
 				Sender: sender,
 			}
 			ret = append(ret, it)

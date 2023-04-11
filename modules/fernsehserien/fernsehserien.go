@@ -1,14 +1,12 @@
 package fernsehserien
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
-	cmdsplit "signalbot_go/internal/cmdSplit"
 	"signalbot_go/internal/differ"
 	"signalbot_go/internal/signalsender"
+	"signalbot_go/modules"
 	"signalbot_go/signaldbus"
 	"sort"
 	"strings"
@@ -19,21 +17,20 @@ import (
 )
 
 type Fernsehserien struct {
-	log         *slog.Logger        `yaml:"-"`
-	ConfigDir   string              `yaml:"-"`
-	Series      map[string]string   `yaml:"series"`
-	Aliases     map[string][]string `yaml:"aliases"`
-	UnavailableSenders map[string]bool `yaml:"unavailableSenders"`
-	Lasts differ.Differ[string,string,sending] `yaml:"lasts"` // stores last chat->user->sending
-	getChat func(m *signaldbus.Message) string
+	modules.Module
+
+	fetcher            Fetcher                                `yaml:"-"`
+	Series             map[string]string                      `yaml:"series"`
+	Aliases            map[string][]string                    `yaml:"aliases"`
+	UnavailableSenders map[string]bool                        `yaml:"unavailableSenders"`
+	Lasts              differ.Differ[string, string, sending] `yaml:"lasts"` // stores last chat->user->sending
+	getChat            func(m *signaldbus.Message) string
 }
 
 func NewFernsehserien(log *slog.Logger, cfgDir string, getChat func(m *signaldbus.Message) string) (*Fernsehserien, error) {
 	r := Fernsehserien{
-		log:       log,
-		ConfigDir: cfgDir,
-		getChat: getChat,
-		Lasts: make(differ.Differ[string,string,sending]),
+		Module:  modules.NewModule(log, cfgDir),
+		Lasts:   make(differ.Differ[string, string, sending]),
 	}
 
 	f, err := os.Open(filepath.Join(r.ConfigDir, "fernsehserien.yaml"))
@@ -60,6 +57,9 @@ func NewFernsehserien(log *slog.Logger, cfgDir string, getChat func(m *signaldbu
 	if err := r.Validate(); err != nil {
 		return nil, err
 	}
+	if err := r.Module.Validate(); err != nil {
+		return nil, err
+	}
 
 	return &r, nil
 }
@@ -75,69 +75,29 @@ func (r *Fernsehserien) Validate() error {
 	return nil
 }
 
-func (r *Fernsehserien) sendError(m *signaldbus.Message, signal signalsender.SignalSender, reply string) {
-	if _, err := signal.Respond(reply, nil, m, false); err != nil {
-		r.log.Error(fmt.Sprintf("Error responding to %v", m))
-	}
-}
-
 type Args struct {
 	Which  string `arg:"positional"`
 	Insert string `arg:"-i,--insert"`
-	Quiet  bool    `arg:"-q,--quiet" default:"false"`
-	Diff   bool    `arg:"--diff" default:"false"`
-	Data   bool    `arg:"-d,--data" default:"true"`
+	Quiet  bool   `arg:"-q,--quiet" default:"false"`
+	Diff   bool   `arg:"--diff" default:"false"`
+	Data   bool   `arg:"-d,--data" default:"true"`
 }
 
 func (r *Fernsehserien) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
 	var args Args
 	parser, err := arg.NewParser(arg.Config{}, &args)
-
 	if err != nil {
-		r.log.Error(fmt.Sprintf("newParser -> %v", err))
+		r.Log.Error(fmt.Sprintf("newParser -> %v", err))
 		return
 	}
 
-	vargs, err := cmdsplit.Split(m.Message)
-	if err != nil {
-		errMsg := fmt.Sprintf("Error on parsing message: %v", err)
-		r.log.Error(errMsg)
-		r.sendError(m, signal, errMsg)
+	if err := r.Module.Handle(m, signal, virtRcv, parser); err != nil {
+		errMsg := err.Error()
+		r.Log.Error(errMsg)
+		r.SendError(m, signal, errMsg)
 		return
 	}
 
-	err = parser.Parse(vargs)
-
-	if err != nil {
-		switch err {
-		case arg.ErrVersion:
-			// not implemented
-			errMsg := fmt.Sprintf("Error: %v", "Version is not implemented")
-			r.log.Error(errMsg)
-			r.sendError(m, signal, errMsg)
-			return
-		case arg.ErrHelp:
-			buf := new(bytes.Buffer)
-			parser.WriteHelp(buf)
-
-			if b, err := io.ReadAll(buf); err != nil {
-				errMsg := fmt.Sprintf("Error: %v", err)
-				r.log.Error(errMsg)
-				r.sendError(m, signal, errMsg)
-				return
-			} else {
-				errMsg := string(b)
-				r.log.Info(fmt.Sprintf("Error: %v", err))
-				r.sendError(m, signal, errMsg)
-				return
-			}
-		default:
-			errMsg := fmt.Sprintf("Error: %v", err)
-			r.log.Error(errMsg)
-			r.sendError(m, signal, errMsg)
-			return
-		}
-	}
 	if args.Insert != "" {
 		r.Series[args.Which] = args.Insert
 		r.Aliases["all"] = append(r.Aliases["all"], args.Insert)
@@ -152,7 +112,7 @@ func (r *Fernsehserien) Handle(m *signaldbus.Message, signal signalsender.Signal
 		resolvedL, ok := r.Aliases[args.Which]
 		if !ok {
 			errMsg := fmt.Sprintf("Error: %v is unknown", args.Which)
-			r.log.Error(errMsg)
+			r.Log.Error(errMsg)
 			builder := strings.Builder{}
 			builder.WriteString(errMsg)
 			builder.WriteRune('\n')
@@ -163,23 +123,22 @@ func (r *Fernsehserien) Handle(m *signaldbus.Message, signal signalsender.Signal
 			}
 			sorted.Sort()
 			builder.WriteString(strings.Join(sorted, ", "))
-			r.sendError(m, signal, builder.String())
+			r.SendError(m, signal, builder.String())
 			return
 		}
-		for _,re := range resolvedL {
+		for _, re := range resolvedL {
 			urls[re] = r.Series[re]
 		}
 	}
 
-	items,err := Get(urls, r.UnavailableSenders)
+	items, err := r.fetcher.get(urls, r.UnavailableSenders)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error: %v", err)
-		r.log.Error(errMsg)
-		r.sendError(m, signal, errMsg)
+		r.Log.Error(errMsg)
+		r.SendError(m, signal, errMsg)
 		return
 	}
 
-	
 	resp := strings.Builder{}
 	if args.Data {
 		resp.WriteString(items.String())
@@ -206,24 +165,25 @@ func (r *Fernsehserien) Handle(m *signaldbus.Message, signal signalsender.Signal
 	_, err = signal.Respond(respS, []string{}, m, true)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error: %v", err)
-		r.log.Error(errMsg)
-		r.sendError(m, signal, errMsg)
+		r.Log.Error(errMsg)
+		r.SendError(m, signal, errMsg)
 	}
-}
-
-func (r *Fernsehserien) Start(virtRcv func(*signaldbus.Message)) error {
-	return nil
 }
 
 func (r *Fernsehserien) Close(virtRcv func(*signaldbus.Message)) {
+	r.Module.Close(virtRcv)
+
 	delete(r.Aliases, "all") // "all" alias is always a generated one
 	f, err := os.Create(filepath.Join(r.ConfigDir, "fernsehserien.yaml"))
 	if err != nil {
-		r.log.Error(fmt.Sprintf("Error opening 'buechertreff.yaml': %v", err))
+		r.Log.Error(fmt.Sprintf("Error opening 'buechertreff.yaml': %v", err))
 	}
+	defer f.Close()
+
 	e := yaml.NewEncoder(f)
+	defer e.Close()
 	err = e.Encode(r)
 	if err != nil {
-		r.log.Error(fmt.Sprintf("Error endcoding to 'buechertreff.yaml': %v", err))
+		r.Log.Error(fmt.Sprintf("Error endcoding to 'buechertreff.yaml': %v", err))
 	}
 }

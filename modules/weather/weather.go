@@ -1,18 +1,12 @@
 package weather
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
-	cmdsplit "signalbot_go/internal/cmdSplit"
 	"signalbot_go/internal/signalsender"
+	"signalbot_go/modules"
 	"signalbot_go/signaldbus"
-	"strconv"
 	"time"
 
 	"github.com/alexflint/go-arg"
@@ -26,26 +20,23 @@ type Position struct {
 }
 
 type Weather struct {
-	log       *slog.Logger `yaml:"-"`
-	ConfigDir string       `yaml:"-"`
+	modules.Module
+	Fetcher Fetcher `yaml:"fetcher"`
 
-	ApiKey      string `yaml:"openweatherKey"`
-	Lang        string `yaml:"lang"`
-	Unitsystem  string `yaml:"unitsystem"`
-	MinuteLimit uint   `yaml:"minuteLimit"`
-	DayLimit    uint   `yaml:"dayLimit"`
-	MonthLimit  uint   `yaml:"monthLimit"`
+	MinuteLimit uint `yaml:"minuteLimit"`
+	DayLimit    uint `yaml:"dayLimit"`
+	MonthLimit  uint `yaml:"monthLimit"`
 
 	Locations map[string]Position `yaml:"locations"`
 }
 
 func NewWeather(log *slog.Logger, cfgDir string) (*Weather, error) {
-	w := Weather{
-		log:       log,
-		ConfigDir: cfgDir,
+	r := Weather{
+		Module:  modules.NewModule(log, cfgDir),
+		Fetcher: Fetcher{},
 	}
 
-	f, err := os.Open(filepath.Join(w.ConfigDir, "weather.yaml"))
+	f, err := os.Open(filepath.Join(r.ConfigDir, "weather.yaml"))
 	if err != nil {
 		return nil, err
 	}
@@ -53,36 +44,27 @@ func NewWeather(log *slog.Logger, cfgDir string) (*Weather, error) {
 
 	d := yaml.NewDecoder(f)
 	d.KnownFields(true)
-	err = d.Decode(&w)
+	err = d.Decode(&r)
 	if err != nil {
 		return nil, err
 	}
 
 	// validation
-	if err := w.Validate(); err != nil {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	if err := r.Module.Validate(); err != nil {
+		return nil, err
+	}
+	if err := r.Fetcher.Validate(); err != nil {
 		return nil, err
 	}
 
-	return &w, nil
+	return &r, nil
 }
 
-func (w *Weather) Validate() error {
-	if v, ok := langs[w.Lang]; !ok || !v {
-		return fmt.Errorf("Invalid lang selected. Was: %s", w.Lang)
-	}
-	if w.Unitsystem != "metric" && w.Unitsystem != "imperial" && w.Unitsystem != "standard" {
-		return fmt.Errorf("Invalid unitsystem selected (has to be either 'metric', 'standard' or 'imperial'). Was: %s", w.Unitsystem)
-	}
-	if len(w.ApiKey) != 32 {
-		return fmt.Errorf("Apikey should have 32 chars, but has %d", len(w.ApiKey))
-	}
+func (r *Weather) Validate() error {
 	return nil
-}
-
-func (w *Weather) sendError(m *signaldbus.Message, signal signalsender.SignalSender, reply string) {
-	if _, err := signal.Respond(reply, nil, m, false); err != nil {
-		w.log.Error(fmt.Sprintf("Error responding to %v", m))
-	}
 }
 
 type Args struct {
@@ -90,98 +72,55 @@ type Args struct {
 	// When  int    `arg:"-d,--day" default:"0"`
 }
 
-func (w *Weather) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
+func (r *Weather) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
 	var args Args
 	parser, err := arg.NewParser(arg.Config{}, &args)
-
 	if err != nil {
-		w.log.Error(fmt.Sprintf("weather module: newParser -> %v", err))
+		r.Log.Error(fmt.Sprintf("newParser -> %v", err))
 		return
 	}
 
-	vargs, err := cmdsplit.Split(m.Message)
-	if err != nil {
-		errMsg := fmt.Sprintf("weather module: Error on parsing message: %v", err)
-		w.log.Error(errMsg)
-		w.sendError(m, signal, errMsg)
+	if err := r.Module.Handle(m, signal, virtRcv, parser); err != nil {
+		errMsg := err.Error()
+		r.Log.Error(errMsg)
+		r.SendError(m, signal, errMsg)
 		return
 	}
 
-	err = parser.Parse(vargs)
+	// check quota
+	if fine, err := r.incQuota(); err != nil {
+		errMsg := fmt.Sprintf("Error checking quota. %v", err)
+		r.Log.Error(errMsg)
+		r.SendError(m, signal, errMsg)
+		return
+	} else if !fine {
+		errMsg := "Quota exceeded."
+		r.Log.Error(errMsg)
+		r.SendError(m, signal, errMsg)
+		return
+	}
 
+	loc, ok := r.Locations[args.Where]
+	if !ok {
+		errMsg := fmt.Sprintf("location %v is unknown", args.Where)
+		r.Log.Error(errMsg)
+		r.SendError(m, signal, errMsg)
+		return
+	}
+
+	resp, err := r.Fetcher.get(loc)
 	if err != nil {
-		switch err {
-		case arg.ErrVersion:
-			// not implemented
-			errMsg := fmt.Sprintf("weather module: Error: %v", "Version is not implemented")
-			w.log.Error(errMsg)
-			w.sendError(m, signal, errMsg)
-			return
-		case arg.ErrHelp:
-			buf := new(bytes.Buffer)
-			parser.WriteHelp(buf)
-
-			if b, err := io.ReadAll(buf); err != nil {
-				errMsg := fmt.Sprintf("openweather Error: %v", err)
-				w.log.Error(errMsg)
-				w.sendError(m, signal, errMsg)
-				return
-			} else {
-				errMsg := string(b)
-				w.log.Info(fmt.Sprintf("weather module: Error: %v", err))
-				w.sendError(m, signal, errMsg)
-				return
-			}
-		default:
-			errMsg := fmt.Sprintf("openweather Error: %v", err)
-			w.log.Error(errMsg)
-			w.sendError(m, signal, errMsg)
-			return
-		}
-	} else {
-		// check quota
-		if fine, err := w.incQuota(); err != nil {
-			errMsg := fmt.Sprintf("openweather Error checking quota. %v", err)
-			w.log.Error(errMsg)
-			w.sendError(m, signal, errMsg)
-			return
-		} else if !fine {
-			errMsg := "openweather Error: Quota exceeded."
-			w.log.Error(errMsg)
-			w.sendError(m, signal, errMsg)
-			return
-		}
-
-		loc, ok := w.Locations[args.Where]
-		if !ok {
-			errMsg := fmt.Sprintf("openweather Error: location %v is unknown", args.Where)
-			w.log.Error(errMsg)
-			w.sendError(m, signal, errMsg)
-			return
-		}
-
-		r, err := w.get(loc)
-		if err != nil {
-			errMsg := fmt.Sprintf("openweather Error: %v", err)
-			w.log.Error(errMsg)
-			w.sendError(m, signal, errMsg)
-			return
-		}
-		defer r.Close()
-		resp, err := w.parse(r)
-		if err != nil {
-			errMsg := fmt.Sprintf("openweather Error: %v", err)
-			w.log.Error(errMsg)
-			w.sendError(m, signal, errMsg)
-			return
-		}
-		_, err = signal.Respond(resp, []string{}, m, true)
-		if err != nil {
-			errMsg := fmt.Sprintf("openweather Error: %v", err)
-			w.log.Error(errMsg)
-			w.sendError(m, signal, errMsg)
-			return
-		}
+		errMsg := fmt.Sprintf("Error: %v", err)
+		r.Log.Error(errMsg)
+		r.SendError(m, signal, errMsg)
+		return
+	}
+	_, err = signal.Respond(resp.String(), []string{}, m, true)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error: %v", err)
+		r.Log.Error(errMsg)
+		r.SendError(m, signal, errMsg)
+		return
 	}
 }
 
@@ -269,46 +208,4 @@ func (w *Weather) incQuota() (bool, error) {
 	}
 
 	return ret, nil
-}
-
-const baseUrl string = "https://api.openweathermap.org/data/2.5/onecall?"
-
-func (w *Weather) get(loc Position) (io.ReadCloser, error) {
-	params := url.Values{
-		"exclude": {"minutely"},
-		"appid":   {w.ApiKey},
-		"lat":     {strconv.FormatFloat(float64(loc.Lat), 'f', 4, 32)},
-		"lon":     {strconv.FormatFloat(float64(loc.Lon), 'f', 4, 32)},
-		"units":   {w.Unitsystem},
-		"lang":    {w.Lang},
-	}
-	resp, err := http.Get(baseUrl + params.Encode())
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("getting weather information failed with statusCode %d", resp.StatusCode)
-	}
-	return resp.Body, nil
-}
-
-func (w *Weather) getFromFile() (io.ReadCloser, error) {
-	return os.Open(filepath.Join(w.ConfigDir, "example.json"))
-}
-
-func (w *Weather) parse(r io.ReadCloser) (string, error) {
-	d := json.NewDecoder(r)
-	resp := &openweatherResp{}
-	err := d.Decode(resp)
-	if err != nil {
-		panic(err)
-	}
-	return fmt.Sprintf("%v", resp), nil
-}
-
-func (w *Weather) Start(virtRcv func(*signaldbus.Message)) error {
-	return nil
-}
-
-func (w *Weather) Close(virtRcv func(*signaldbus.Message)) {
 }

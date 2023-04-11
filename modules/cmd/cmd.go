@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"signalbot_go/internal/signalsender"
+	"signalbot_go/modules"
 	"signalbot_go/signaldbus"
 
 	"golang.org/x/exp/slog"
@@ -17,10 +18,7 @@ import (
 // Create with NewCmd
 // TODO what about concurrency
 type Cmd struct {
-	Log *slog.Logger `yaml:"-"`
-	// the configuration will be read from here. In addition, this will be the
-	// working directory for any script being executed.
-	ConfigDir string `yaml:"-"`
+	modules.Module
 	// store a command -> scriptname/-path mapping.
 	// Might be replaced with argument parsing (e.g. https://pkg.go.dev/github.com/alexflint/go-arg)?
 	Commands map[string]string `yaml:"commands"`
@@ -28,12 +26,11 @@ type Cmd struct {
 
 // create a new cmd instance from a configuration.
 func NewCmd(log *slog.Logger, cfgDir string) (*Cmd, error) {
-	c := Cmd{
-		Log:       log,
-		ConfigDir: cfgDir,
+	r := Cmd{
+		Module: modules.NewModule(log, cfgDir),
 	}
 
-	f, err := os.Open(filepath.Join(c.ConfigDir, "cmd.yaml"))
+	f, err := os.Open(filepath.Join(r.ConfigDir, "cmd.yaml"))
 	if err != nil {
 		return nil, err
 	}
@@ -41,26 +38,30 @@ func NewCmd(log *slog.Logger, cfgDir string) (*Cmd, error) {
 
 	d := yaml.NewDecoder(f)
 	d.KnownFields(true)
-	err = d.Decode(&c)
+	err = d.Decode(&r)
 	if err != nil {
 		return nil, err
 	}
 
 	// validation
-	if err := c.Validate(); err != nil {
+	if err := r.Validate(); err != nil {
 		return nil, err
 	}
-	return &c, nil
+	if err := r.Module.Validate(); err != nil {
+		return nil, err
+	}
+
+	return &r, nil
 }
 
 // check if stored values are valid (for now only the read configuration mapping)
-func (c *Cmd) Validate() error {
-	for _, cmd := range c.Commands {
+func (r *Cmd) Validate() error {
+	for _, cmd := range r.Commands {
 		if cmd == "" {
 			return fmt.Errorf("command cannot be empty")
 		}
 		var stat os.FileInfo
-		stat, err := os.Stat(filepath.Join(c.ConfigDir, cmd))
+		stat, err := os.Stat(filepath.Join(r.ConfigDir, cmd))
 		if err != nil {
 			return fmt.Errorf("Error reading command. %v", err)
 		}
@@ -68,17 +69,10 @@ func (c *Cmd) Validate() error {
 			return fmt.Errorf("Command is not a regular file")
 		}
 		if stat.Mode().Perm()&0111 != 0111 {
-			return fmt.Errorf("Command is not executable, %d (file: %s)", stat.Mode().Perm(), filepath.Join(c.ConfigDir, cmd))
+			return fmt.Errorf("Command is not executable, %d (file: %s)", stat.Mode().Perm(), filepath.Join(r.ConfigDir, cmd))
 		}
 	}
 	return nil
-}
-
-// shortcut for sending an error via signal. If this fails log error.
-func (c *Cmd) sendError(m *signaldbus.Message, signal signalsender.SignalSender, reply string) {
-	if _, err := signal.Respond(reply, nil, m, false); err != nil {
-		c.Log.Error(fmt.Sprintf("Error responding to %v", m))
-	}
 }
 
 // handle a signalmessage
@@ -91,14 +85,14 @@ func (c *Cmd) Handle(m *signaldbus.Message, signal signalsender.SignalSender, vi
 		if err != nil {
 			errMsg := fmt.Sprintf("Error: %v", err)
 			c.Log.Error(errMsg)
-			c.sendError(m, signal, errMsg)
+			c.SendError(m, signal, errMsg)
 			return
 		}
 
 		if err := command.Start(); err != nil {
 			errMsg := fmt.Sprintf("Error: %v", err)
 			c.Log.Error(errMsg)
-			c.sendError(m, signal, errMsg)
+			c.SendError(m, signal, errMsg)
 			return
 		}
 
@@ -107,7 +101,7 @@ func (c *Cmd) Handle(m *signaldbus.Message, signal signalsender.SignalSender, vi
 		if err := command.Wait(); err != nil {
 			errMsg := fmt.Sprintf("Error: %v", err)
 			c.Log.Error(errMsg)
-			c.sendError(m, signal, errMsg)
+			c.SendError(m, signal, errMsg)
 			return
 		}
 
@@ -123,11 +117,4 @@ func (c *Cmd) Handle(m *signaldbus.Message, signal signalsender.SignalSender, vi
 			c.Log.Error(fmt.Sprintf("Failed to send reply to %v", m))
 		}
 	}
-}
-
-func (c *Cmd) Start(virtRcv func(*signaldbus.Message)) error {
-	return nil
-}
-
-func (c *Cmd) Close(virtRcv func(*signaldbus.Message)) {
 }

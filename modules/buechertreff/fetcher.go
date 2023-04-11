@@ -10,10 +10,10 @@ import (
 )
 
 type bookItem struct {
-	pos string
-	name string
+	pos      string
+	name     string
 	origName string
-	pub string
+	pub      string
 }
 
 func (b bookItem) String() string {
@@ -33,11 +33,12 @@ func (b bookItem) String() string {
 }
 
 type bookItems []bookItem
+
 func (b bookItems) String() string {
 	builder := strings.Builder{}
 
 	first := true
-	for _,i := range b {
+	for _, i := range b {
 		if !first {
 			builder.WriteRune('\n')
 		} else {
@@ -50,8 +51,11 @@ func (b bookItems) String() string {
 	return builder.String()
 }
 
-func Get(url string) (bookItems, error) {
-	resp,err := http.Get(url)
+type Fetcher struct {
+}
+
+func (f *Fetcher) get(url string) (bookItems, error) {
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
@@ -60,14 +64,14 @@ func Get(url string) (bookItems, error) {
 		return nil, fmt.Errorf("")
 	}
 
-	root,err := html.Parse(resp.Body)
+	root, err := html.Parse(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	items := cascadia.QueryAll(root, cascadia.MustCompile(".containerHeadline"))
 	bookItems := make(bookItems, 0, len(items))
-	for _,i := range items {
+	for _, i := range items {
 		it := bookItem{}
 
 		posN := cascadia.Query(i, cascadia.MustCompile("[itemprop=\"position\"]"))

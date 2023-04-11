@@ -1,13 +1,11 @@
 package tv
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
-	cmdsplit "signalbot_go/internal/cmdSplit"
 	"signalbot_go/internal/signalsender"
+	"signalbot_go/modules"
 	"signalbot_go/modules/tv/internal/show"
 	"signalbot_go/signaldbus"
 	"strings"
@@ -19,8 +17,7 @@ import (
 )
 
 type Tv struct {
-	log         *slog.Logger  `yaml:"-"`
-	ConfigDir   string        `yaml:"-"`
+	modules.Module
 	SenderOrder []string      `yaml:"senderOrder"`
 	Location    string        `yaml:"location"`
 	Timeout     time.Duration `yaml:"timeout"`
@@ -29,12 +26,11 @@ type Tv struct {
 }
 
 func NewTv(log *slog.Logger, cfgDir string) (*Tv, error) {
-	t := Tv{
-		log:       log,
-		ConfigDir: cfgDir,
+	r := Tv{
+		Module: modules.NewModule(log, cfgDir),
 	}
 
-	f, err := os.Open(filepath.Join(t.ConfigDir, "tv.yaml"))
+	f, err := os.Open(filepath.Join(r.ConfigDir, "tv.yaml"))
 	if err != nil {
 		return nil, err
 	}
@@ -42,24 +38,27 @@ func NewTv(log *slog.Logger, cfgDir string) (*Tv, error) {
 
 	d := yaml.NewDecoder(f)
 	d.KnownFields(true)
-	err = d.Decode(&t)
+	err = d.Decode(&r)
 	if err != nil {
 		return nil, err
 	}
 
-	t.loc, err = time.LoadLocation(t.Location)
+	r.loc, err = time.LoadLocation(r.Location)
 	if err != nil {
 		return nil, err
 	}
 
-	t.fetcher = NewFetcher(t.log.With(), t.loc, t.Timeout)
+	r.fetcher = NewFetcher(r.Log, r.loc, r.Timeout)
 
 	// validation
-	if err := t.Validate(); err != nil {
+	if err := r.Validate(); err != nil {
+		return nil, err
+	}
+	if err := r.Module.Validate(); err != nil {
 		return nil, err
 	}
 
-	return &t, nil
+	return &r, nil
 }
 
 func (t *Tv) Validate() error {
@@ -69,93 +68,52 @@ func (t *Tv) Validate() error {
 	return nil
 }
 
-func (t *Tv) sendError(m *signaldbus.Message, signal signalsender.SignalSender, reply string) {
-	if _, err := signal.Respond(reply, nil, m, false); err != nil {
-		t.log.Error(fmt.Sprintf("Error responding to %v", m))
-	}
-}
-
 type Args struct {
 	When string `arg:"positional"`
 	Post uint   `arg:"-p,--post" default:"1"`
 }
 
-func (t *Tv) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
+func (r *Tv) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
 	var args Args
 	parser, err := arg.NewParser(arg.Config{}, &args)
-
 	if err != nil {
-		t.log.Error(fmt.Sprintf("tv module: newParser -> %v", err))
+		r.Log.Error(fmt.Sprintf("newParser -> %v", err))
 		return
 	}
 
-	vargs, err := cmdsplit.Split(m.Message)
-	if err != nil {
-		errMsg := fmt.Sprintf("tv module: Error on parsing message: %v", err)
-		t.log.Error(errMsg)
-		t.sendError(m, signal, errMsg)
+	if err := r.Module.Handle(m, signal, virtRcv, parser); err != nil {
+		errMsg := err.Error()
+		r.Log.Error(errMsg)
+		r.SendError(m, signal, errMsg)
 		return
 	}
 
-	err = parser.Parse(vargs)
+	target := time.Now()
 
+	switch args.When {
+	case "prime":
+		target = time.Date(target.Year(), target.Month(), target.Day(), 20, 15, 0, 0, r.loc)
+	default:
+		errMsg := "invalid 'when' parameter"
+		r.Log.Error(errMsg)
+		r.SendError(m, signal, errMsg)
+		return
+	}
+
+	out, err := r.format(target, args.Post)
 	if err != nil {
-		switch err {
-		case arg.ErrVersion:
-			// not implemented
-			errMsg := fmt.Sprintf("tv module: Error: %v", "Version is not implemented")
-			t.log.Error(errMsg)
-			t.sendError(m, signal, errMsg)
-			return
-		case arg.ErrHelp:
-			buf := new(bytes.Buffer)
-			parser.WriteHelp(buf)
+		errMsg := fmt.Sprintf("Error: %v", err)
+		r.Log.Error(errMsg)
+		r.SendError(m, signal, errMsg)
+		return
+	}
 
-			if b, err := io.ReadAll(buf); err != nil {
-				errMsg := fmt.Sprintf("Error: %v", err)
-				t.log.Error(errMsg)
-				t.sendError(m, signal, errMsg)
-				return
-			} else {
-				errMsg := string(b)
-				t.log.Info(fmt.Sprintf("tv module: Error: %v", err))
-				t.sendError(m, signal, errMsg)
-				return
-			}
-		default:
-			errMsg := fmt.Sprintf("Error: %v", err)
-			t.log.Error(errMsg)
-			t.sendError(m, signal, errMsg)
-			return
-		}
-	} else {
-		target := time.Now()
-
-		switch args.When {
-		case "prime":
-			target = time.Date(target.Year(), target.Month(), target.Day(), 20, 15, 0, 0, t.loc)
-		default:
-			errMsg := fmt.Sprintf("tv module: Error: %v", "invalid 'when' parameter")
-			t.log.Error(errMsg)
-			t.sendError(m, signal, errMsg)
-			return
-		}
-
-		out, err := t.format(target, args.Post)
-		if err != nil {
-			errMsg := fmt.Sprintf("Error: %v", err)
-			t.log.Error(errMsg)
-			t.sendError(m, signal, errMsg)
-			return
-		}
-
-		_, err = signal.Respond(out, []string{}, m, true)
-		if err != nil {
-			errMsg := fmt.Sprintf("Error: %v", err)
-			t.log.Error(errMsg)
-			t.sendError(m, signal, errMsg)
-			return
-		}
+	_, err = signal.Respond(out, []string{}, m, true)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error: %v", err)
+		r.Log.Error(errMsg)
+		r.SendError(m, signal, errMsg)
+		return
 	}
 }
 
@@ -194,15 +152,7 @@ func (t *Tv) format(target time.Time, postOrig uint) (string, error) {
 		if post != 0 {
 			builder.WriteString(last.String())
 			builder.WriteRune('\n')
-			post--
 		}
 	}
 	return builder.String(), nil
-}
-
-func (t *Tv) Start(virtRcv func(*signaldbus.Message)) error {
-	return nil
-}
-
-func (t *Tv) Close(virtRcv func(*signaldbus.Message)) {
 }
