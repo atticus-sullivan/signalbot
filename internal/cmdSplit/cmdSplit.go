@@ -64,8 +64,13 @@ func Split(s string) ([]string, error) {
 	if st != normal {
 		return nil, fmt.Errorf("Malformed string, open escape sequence or quote in the end")
 	}
+	ret = append(ret, collectString.String())
 
-	return append(ret, collectString.String()), nil
+	if len(ret) > 0 && ret[len(ret)-1] == "" {
+		ret = ret[:len(ret)-1]
+	}
+
+	return ret, nil
 }
 
 func Unescape(s string) (string, error) {
