@@ -84,58 +84,58 @@ func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalSe
 
 	// todoMod register modules
 	if _, ok := cfg.Handlers["help"]; ok {
-		if s.modules["help"], err = NewHelp(log.With(), filepath.Join(cfgDir, "help"), s.Handlers, s.self); err != nil {
+		if s.modules["help"], err = NewHelp(log.With("module", "help"), filepath.Join(cfgDir, "help"), s.Handlers, s.self); err != nil {
 			return nil, fmt.Errorf("'help' module: %v", err)
 		}
 	}
 
 	if _, ok := cfg.Handlers["cmd"]; ok {
-		if s.modules["cmd"], err = cmd.NewCmd(log.With(), filepath.Join(cfgDir, "cmd")); err != nil {
+		if s.modules["cmd"], err = cmd.NewCmd(log.With("module", "cmd"), filepath.Join(cfgDir, "cmd")); err != nil {
 			return nil, fmt.Errorf("'cmd' module: %v", err)
 		}
 	}
 	if _, ok := cfg.Handlers["periodic"]; ok {
-		if s.modules["periodic"], err = periodic.NewPeriodic(log.With(), filepath.Join(cfgDir, "periodic")); err != nil {
+		if s.modules["periodic"], err = periodic.NewPeriodic(log.With("module", "periodic"), filepath.Join(cfgDir, "periodic")); err != nil {
 			return nil, fmt.Errorf("'periodic' module: %v", err)
 		}
 	}
 	if _, ok := cfg.Handlers["refectory"]; ok {
-		if s.modules["refectory"], err = refectory.NewRefectory(log.With(), filepath.Join(cfgDir, "refectory")); err != nil {
+		if s.modules["refectory"], err = refectory.NewRefectory(log.With("module", "refectory"), filepath.Join(cfgDir, "refectory")); err != nil {
 			return nil, fmt.Errorf("'refectory' module: %v", err)
 		}
 	}
 	if _, ok := cfg.Handlers["weather"]; ok {
-		if s.modules["weather"], err = weather.NewWeather(log.With(), filepath.Join(cfgDir, "weather")); err != nil {
+		if s.modules["weather"], err = weather.NewWeather(log.With("module", "weather"), filepath.Join(cfgDir, "weather")); err != nil {
 			return nil, fmt.Errorf("'weather' module: %v", err)
 		}
 	}
 	if _, ok := cfg.Handlers["tv"]; ok {
-		if s.modules["tv"], err = tv.NewTv(log.With(), filepath.Join(cfgDir, "tv")); err != nil {
+		if s.modules["tv"], err = tv.NewTv(log.With("module", "tv"), filepath.Join(cfgDir, "tv")); err != nil {
 			return nil, fmt.Errorf("'tv' module: %v", err)
 		}
 	}
 	if _, ok := cfg.Handlers["buechertreff"]; ok {
-		if s.modules["buechertreff"], err = buechertreff.NewBuechertreff(log.With(), filepath.Join(cfgDir, "buechertreff")); err != nil {
+		if s.modules["buechertreff"], err = buechertreff.NewBuechertreff(log.With("module", "buechertreff"), filepath.Join(cfgDir, "buechertreff")); err != nil {
 			return nil, fmt.Errorf("'buechertreff' module: %v", err)
 		}
 	}
 	if _, ok := cfg.Handlers["freezer"]; ok {
-		if s.modules["freezer"], err = freezer.NewFreezer(log.With(), filepath.Join(cfgDir, "freezer")); err != nil {
+		if s.modules["freezer"], err = freezer.NewFreezer(log.With("module", "freezer"), filepath.Join(cfgDir, "freezer")); err != nil {
 			return nil, fmt.Errorf("'freezer' module: %v", err)
 		}
 	}
 	if _, ok := cfg.Handlers["influx"]; ok {
-		if s.modules["influx"], err = influx.NewInflux(log.With(), filepath.Join(cfgDir, "influx")); err != nil {
+		if s.modules["influx"], err = influx.NewInflux(log.With("module", "influx"), filepath.Join(cfgDir, "influx")); err != nil {
 			return nil, fmt.Errorf("'influx' module: %v", err)
 		}
 	}
 	if _, ok := cfg.Handlers["fernsehserien"]; ok {
-		if s.modules["fernsehserien"], err = fernsehserien.NewFernsehserien(log.With(), filepath.Join(cfgDir, "fernsehserien")); err != nil {
+		if s.modules["fernsehserien"], err = fernsehserien.NewFernsehserien(log.With("module", "fernsehserien"), filepath.Join(cfgDir, "fernsehserien")); err != nil {
 			return nil, fmt.Errorf("'fernsehserien' module: %v", err)
 		}
 	}
 	if _, ok := cfg.Handlers["news"]; ok {
-		if s.modules["news"], err = news.NewNews(log.With(), filepath.Join(cfgDir, "news")); err != nil {
+		if s.modules["news"], err = news.NewNews(log.With("module", "news"), filepath.Join(cfgDir, "news")); err != nil {
 			return nil, fmt.Errorf("'news' module: %v", err)
 		}
 	}
