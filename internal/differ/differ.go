@@ -13,13 +13,18 @@ type diffStringer interface {
 type Differ[S comparable, T comparable, U diffStringer] map[S]map[T][]U
 
 func (d *Differ[S,T,U]) Diff(l1 S, l2 T, dataB []U) (string) {
+	first := true
 	a, ok := (*d)[l1]
 	if !ok {
 		// everything is new
 		builder := strings.Builder{}
 		for _, dB := range dataB {
+			if !first {
+				builder.WriteRune('\n')
+			} else {
+				first = false
+			}
 			builder.WriteString(dB.AddString())
-			builder.WriteRune('\n')
 		}
 		return builder.String()
 	}
@@ -28,12 +33,17 @@ func (d *Differ[S,T,U]) Diff(l1 S, l2 T, dataB []U) (string) {
 		// everything is new
 		builder := strings.Builder{}
 		for _, dB := range dataB {
+			if !first {
+				builder.WriteRune('\n')
+			} else {
+				first = false
+			}
 			builder.WriteString(dB.AddString())
-			builder.WriteRune('\n')
 		}
 		return builder.String()
 	}
 	builder := strings.Builder{}
+
 
 	for _, dA := range(dataA) {
 		found := false
@@ -45,8 +55,15 @@ func (d *Differ[S,T,U]) Diff(l1 S, l2 T, dataB []U) (string) {
 		}
 		if !found {
 			// is in A but not in B
-			builder.WriteString(dA.RemString())
-			builder.WriteRune('\n')
+			str := dA.RemString()
+			if str != "" {
+				if !first {
+					builder.WriteRune('\n')
+				} else {
+					first = false
+				}
+				builder.WriteString(str)
+			}
 		}
 	}
 	for _, dB := range(dataB) {
@@ -59,8 +76,15 @@ func (d *Differ[S,T,U]) Diff(l1 S, l2 T, dataB []U) (string) {
 		}
 		if !found {
 			// is in B but not in A
-			builder.WriteString(dB.AddString())
-			builder.WriteRune('\n')
+			str := dB.AddString()
+			if str != "" {
+				builder.WriteString(str)
+				if !first {
+					builder.WriteRune('\n')
+				} else {
+					first = false
+				}
+			}
 		}
 	}
 
