@@ -5,29 +5,37 @@ import (
 	"os/signal"
 	"os/user"
 	"path/filepath"
-	"runtime"
+	"time"
+
+	// "runtime"
 	"signalbot_go/signalserver"
-	"strings"
+	// "strings"
 	"syscall"
 
+	"github.com/lmittmann/tint"
 	"golang.org/x/exp/slog"
 )
 
 // outsourced configuration of logging. Call this to get a configured root logger
 func logInit() *slog.Logger {
-	_, file, _, ok := runtime.Caller(0)
-	if !ok {
-		panic("failed to retrieve runtime information")
-	}
-	dir, _ := filepath.Split(file)
-	replace := func(groups []string, a slog.Attr) slog.Attr {
-		// Remove the directory from the source's filename.
-		if a.Key == slog.SourceKey {
-			a.Value = slog.StringValue(strings.TrimPrefix(a.Value.String(), dir))
-		}
-		return a
-	}
-	logger := slog.New(slog.HandlerOptions{AddSource: true, ReplaceAttr: replace, Level: slog.LevelInfo}.NewTextHandler(os.Stderr))
+	// _, file, _, ok := runtime.Caller(0)
+	// if !ok {
+	// 	panic("failed to retrieve runtime information")
+	// }
+	// dir, _ := filepath.Split(file)
+	// replace := func(groups []string, a slog.Attr) slog.Attr {
+	// 	// Remove the directory from the source's filename.
+	// 	if a.Key == slog.SourceKey {
+	// 		a.Value = slog.StringValue(strings.TrimPrefix(a.Value.String(), dir))
+	// 	}
+	// 	return a
+	// }
+	// logger := slog.New(slog.HandlerOptions{AddSource: true, ReplaceAttr: replace, Level: slog.LevelInfo}.NewTextHandler(os.Stderr))
+	logger := slog.New(tint.Options{
+		Level: slog.LevelInfo,
+		TimeFormat: time.RFC3339,
+		NoColor: false,
+	}.NewHandler(os.Stderr))
 	return logger
 }
 
