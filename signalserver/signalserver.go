@@ -15,6 +15,7 @@ import (
 	"signalbot_go/modules/fernsehserien"
 	"signalbot_go/modules/freezer"
 	"signalbot_go/modules/influx"
+	"signalbot_go/modules/news"
 	"signalbot_go/modules/periodic"
 	"signalbot_go/modules/refectory"
 	"signalbot_go/modules/tv"
@@ -131,6 +132,11 @@ func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalSe
 	if _, ok := cfg.Handlers["fernsehserien"]; ok {
 		if s.modules["fernsehserien"], err = fernsehserien.NewFernsehserien(log.With(), filepath.Join(cfgDir, "fernsehserien")); err != nil {
 			return nil, fmt.Errorf("'fernsehserien' module: %v", err)
+		}
+	}
+	if _, ok := cfg.Handlers["news"]; ok {
+		if s.modules["news"], err = news.NewNews(log.With(), filepath.Join(cfgDir, "news")); err != nil {
+			return nil, fmt.Errorf("'news' module: %v", err)
 		}
 	}
 
