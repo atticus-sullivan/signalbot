@@ -28,7 +28,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/influxdata/line-protocol v0.0.0-20200327222509-2487e7298839 // indirect
 	github.com/jmoiron/sqlx v1.3.5 // indirect
-	github.com/lmittmann/tint v0.2.0 // indirect
+	github.com/lmittmann/tint v0.3.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 )
