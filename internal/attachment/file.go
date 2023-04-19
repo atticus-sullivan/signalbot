@@ -1,11 +1,12 @@
 package attachments
 
 import (
-	"fmt"
+	"errors"
 	"os"
 	"regexp"
 )
 
+// represents a temporary file which is being removed when getting closed.
 type File interface {
 	// returns the Path of the temporary File
 	Path() string
@@ -15,10 +16,16 @@ type File interface {
 	Close() error
 }
 
+// implements the file interface
 type FileImpl struct {
 	path string
 	file *os.File
 }
+
+// errors
+var (
+	ErrInvalidExt error = errors.New("Invalid extension")
+)
 
 var extRe *regexp.Regexp = regexp.MustCompile(`[a-zA-Z0-9]`)
 
@@ -26,7 +33,7 @@ var extRe *regexp.Regexp = regexp.MustCompile(`[a-zA-Z0-9]`)
 // alphanumeric extensions are allowed
 func NewFileImpl(ext string) (*FileImpl, error) {
 	if !extRe.Match([]byte(ext)) {
-		return nil, fmt.Errorf("Invalid extension")
+		return nil, ErrInvalidExt
 	}
 	tmpfile, err := os.CreateTemp("", "signalbot_go-*."+ext)
 	if err != nil {

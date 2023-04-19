@@ -1,35 +1,32 @@
-// package main // only for testing so that this can be run with go run
 package perioder
 
 import (
 	"context"
 	"fmt"
 	"strings"
-
-	// https://gogoapps.io/blog/passing-loggers-in-go-golang-logging-best-practices/ -> pass loggers as struct arguments
-	// check for news on testing after comment https://github.com/golang/go/issues/56345
-	// https://go.dev/play/p/9APBgQuvoo9 maybe for testing handler otherwise just disabel slog when testing
-
 	"sync"
 
 	"golang.org/x/exp/slog"
 )
 
+// event which reoccurs (manages its own loop via `Run`. Can contain arbitrary
+// metadata (T).
 type ReocEvent[T any] interface {
 	// take the context as it is and run the reoccurring event
-	Run(ctx context.Context)
-	// branches off the given context and runs the reoccuring event in this new
+	run(ctx context.Context)
+	// branches off the given context and runs the reoccurring event in this new
 	// context in a new goroutine. The new context is returned.
-	RunAsync(ctx context.Context) (context.Context, context.CancelFunc)
+	runAsync(ctx context.Context) (context.Context, context.CancelFunc)
 	// check if the event was stopped by the context
 	Stopped() bool
-	SetLog(*slog.Logger)
+	setLog(*slog.Logger)
 	Metadata() T
+	cancel()
 	// get string representation
 	String() string
-	Cancel()
 }
 
+// manages reoccurring events
 type Perioder[T any] interface {
 	// synchronously starts the Perioder. You may want to call this with go
 	Start(ctx context.Context)
@@ -43,50 +40,60 @@ type Perioder[T any] interface {
 	String() string
 }
 
-// todo add a remove channel?
+// implements the perioder interface. Should be created with `NewPerioderImpl`
 type PerioderImpl[T any] struct {
 	add_s       chan<- ReocEvent[T] // used by Add()
 	add_r       <-chan ReocEvent[T] // used for receiving the added Events
-	rem_s       chan<- uint // used by Remove()
-	rem_r       <-chan uint // used for receiving the to be removec Events
+	rem_s       chan<- uint         // used by Remove()
+	rem_r       <-chan uint         // used for receiving the to be remove Events
 	events      map[uint]ReocEvent[T]
 	eventsMutex sync.RWMutex
 	log         *slog.Logger
 }
 
+// Creates a new perioder.
 func NewPerioderImpl[T any](log *slog.Logger) *PerioderImpl[T] {
 	cAdd := make(chan ReocEvent[T], 3)
 	cRem := make(chan uint)
 	p := PerioderImpl[T]{
 		add_r: cAdd, add_s: cAdd,
 		rem_r: cRem, rem_s: cRem,
-		log: log,
+		log:    log,
 		events: make(map[uint]ReocEvent[T]),
 	}
 
 	return &p
 }
+
+// add events to the perioder
 func (p *PerioderImpl[T]) Add(event ReocEvent[T]) {
 	p.add_s <- event
 }
+
+// remove the event with `id` from the perioder and stop it.
 func (p *PerioderImpl[T]) Remove(id uint) {
 	p.rem_s <- id
 }
+
+// start the perioder in a context (can be canceled). Listens for add/remove
+// calls. This function Won't return until the perioder is stopped -> should be
+// most probable called in a new goroutine.
 func (p *PerioderImpl[T]) Start(ctx context.Context) {
 	id := uint(0)
 	for {
 		select {
 		case event := <-p.add_r:
 			// event.Id = id
-			event.SetLog(p.log.With())
+			event.setLog(p.log.With())
 			p.eventsMutex.Lock()
 			p.events[id] = event
 			p.eventsMutex.Unlock()
 			id++
 
-			event.RunAsync(ctx)
+			event.runAsync(ctx)
 		case id := <-p.rem_r:
 			p.eventsMutex.Lock()
+			p.events[id].cancel()
 			delete(p.events, id)
 			p.eventsMutex.Unlock()
 		case <-ctx.Done():
@@ -95,7 +102,7 @@ func (p *PerioderImpl[T]) Start(ctx context.Context) {
 	}
 }
 
-// todo should this filter if the event is still running?
+// returns a map id -> event of all still running events
 func (p *PerioderImpl[T]) Events() map[uint]ReocEvent[T] {
 	p.eventsMutex.RLock()
 	defer p.eventsMutex.RUnlock()
@@ -108,6 +115,8 @@ func (p *PerioderImpl[T]) Events() map[uint]ReocEvent[T] {
 	}
 	return r
 }
+
+// stringer
 func (p *PerioderImpl[T]) String() string {
 	builder := strings.Builder{}
 	builder.WriteByte('{')

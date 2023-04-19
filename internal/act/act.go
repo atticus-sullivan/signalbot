@@ -6,6 +6,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// errors
+var (
+	ErrInvalidCap error = errors.New("Invalid Capability value")
+)
+
 // stores if the access is granted or blocked
 type Capability string
 
@@ -15,18 +20,22 @@ const (
 	unset Capability = ""
 )
 
+// check if capability is set to blocked
 func (c Capability) Blocked() bool {
 	return c == block
 }
+
+// check if capability is set to allowed
 func (c Capability) Allowed() bool {
 	return c == allow
 }
+
+// check if capability is set to unset
 func (c Capability) Unset() bool {
 	return c == unset
 }
 
-var ErrInvalidCap error = errors.New("Invalid Capability value")
-
+// validate if the capability is set to a valid value
 func (c Capability) Validate() error {
 	if c != allow && c != block && c != unset {
 		return ErrInvalidCap
@@ -39,11 +48,15 @@ func (c Capability) String() string {
 	return string(c)
 }
 
+// struct which represents an access-control-tree. Can be used e.g. as chat ->
+// user -> access while having defaults for each possible subtree
 type ACT struct {
-	Default Capability `yaml:"default"`
+	Default  Capability     `yaml:"default"`
 	Children map[string]ACT `yaml:"children"`
 }
 
+// enable unmarshaling ACTs from yaml. For the leaf child only a string can be
+// provided which is then used as capability
 func (a *ACT) UnmarshalYAML(value *yaml.Node) error {
 	var capability Capability
 	// try decoding string

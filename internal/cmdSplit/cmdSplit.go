@@ -1,10 +1,17 @@
 package cmdsplit
 
 import (
-	"fmt"
+	"errors"
 	"strings"
 )
 
+// errors
+var (
+	ErrTrailingQuoteEscape error = errors.New("Malformed string, open escape sequence or quote in the end")
+	ErrTrailingEscape      error = errors.New("Malformed string, open escape sequence in the end")
+)
+
+// possible states of the DFA
 type state int
 
 const (
@@ -14,6 +21,9 @@ const (
 	quotedEscaped
 )
 
+// split the string into a slice if strings. Splitting is done similar to the
+// argument splitting in the shell (in general at spaces). ' and " are read as
+// quotation marks and \ as escape character.
 func Split(s string) ([]string, error) {
 	ret := make([]string, 0)
 	collectString := strings.Builder{}
@@ -62,7 +72,7 @@ func Split(s string) ([]string, error) {
 	}
 
 	if st != normal {
-		return nil, fmt.Errorf("Malformed string, open escape sequence or quote in the end")
+		return nil, ErrTrailingQuoteEscape
 	}
 	ret = append(ret, collectString.String())
 
@@ -73,6 +83,11 @@ func Split(s string) ([]string, error) {
 	return ret, nil
 }
 
+// removes one layer of escaping from the string. This means that something
+// like
+// hello\ world
+// becomes
+// hello world
 func Unescape(s string) (string, error) {
 	ret := strings.Builder{}
 	st := normal
@@ -96,7 +111,7 @@ func Unescape(s string) (string, error) {
 	}
 
 	if st != normal {
-		return "", fmt.Errorf("Malformed string, open escape sequence in the end")
+		return "", ErrTrailingEscape
 	}
 
 	return ret.String(), nil
