@@ -1858,10 +1858,10 @@ func TestMessageReceived(t *testing.T) {
 		t.Fatalf("GroupId do not match. Is %v (should: %v)", message.GroupId, message_should.GroupId)
 	}
 	if !reflect.DeepEqual(message.Message, message_should.Message) {
-		t.Fatalf("Message do not match. Is %v (should: %v)", message.Message, message_should.Message)
+		t.Fatalf("Message do not match. Is %+v (should: %+v)", message.Message, message_should.Message)
 	}
 	if !reflect.DeepEqual(message.Attachments, message_should.Attachments) {
-		t.Fatalf("Attachments do not match. Is %v (should: %v)", message.Attachments, message_should.Attachments)
+		t.Fatalf("Attachments do not match. Is %+v (should: %+v)", message.Attachments, message_should.Attachments)
 	}
 }
 
@@ -1894,6 +1894,8 @@ func TestSyncMessageReceived(t *testing.T) {
 			GroupId:     []byte{23, 23, 55},
 			Message:     "hello world",
 			Attachments: []string{"attach1"},
+			Chat: "+494242",
+			Receiver: "dst",
 		},
 		Destination: "dst",
 	}
@@ -1917,7 +1919,7 @@ func TestSyncMessageReceived(t *testing.T) {
 		t.Fatalf("GroupId do not match. Is %v (should: %v)", message.GroupId, message_should.GroupId)
 	}
 	if !reflect.DeepEqual(message.Message, message_should.Message) {
-		t.Fatalf("Message do not match. Is %v (should: %v)", message.Message, message_should.Message)
+		t.Fatalf("Message do not match. Is %+v (should: %+v)", message.Message, message_should.Message)
 	}
 	if !reflect.DeepEqual(message.Attachments, message_should.Attachments) {
 		t.Fatalf("Attachments do not match. Is %v (should: %v)", message.Attachments, message_should.Attachments)

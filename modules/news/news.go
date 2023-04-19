@@ -14,17 +14,21 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// news module. Should be instanciated with `NewNews`.
+// data members are only global to be able to unmarshal them
 type News struct {
 	modules.Module
-	fetcher      Fetcher                                     `yaml:"-"`
-	LastBreaking differ.Differ[string, string, breakingResp] `yaml:"lastBreaking"` // stores last chat->user->sending
+	fetcher      Fetcher                                 `yaml:"-"`
+	LastBreaking differ.Differ[string, string, breaking] `yaml:"lastBreaking"` // stores last chat->user->sending
 }
 
+// instanciates a new News from a configuration file
+// (cfgDir/news.yaml)
 func NewNews(log *slog.Logger, cfgDir string) (*News, error) {
 	r := News{
 		Module:       modules.NewModule(log, cfgDir),
 		fetcher:      Fetcher{},
-		LastBreaking: make(differ.Differ[string, string, breakingResp]),
+		LastBreaking: make(differ.Differ[string, string, breaking]),
 	}
 
 	f, err := os.Open(filepath.Join(r.ConfigDir, "news.yaml"))
@@ -44,17 +48,20 @@ func NewNews(log *slog.Logger, cfgDir string) (*News, error) {
 	if err := r.Validate(); err != nil {
 		return nil, err
 	}
-	if err := r.Module.Validate(); err != nil {
-		return nil, err
-	}
 
 	return &r, nil
 }
 
+// can be used to validate the news struct
 func (r *News) Validate() error {
+	// validate the generic module first
+	if err := r.Module.Validate(); err != nil {
+		return err
+	}
 	return nil
 }
 
+// specifies the arguments when handling a request to this module
 type Args struct {
 	News     *struct{} `arg:"subcommand:news"`
 	Breaking *struct {
@@ -63,7 +70,10 @@ type Args struct {
 	Quiet bool `arg:"-q,--quiet" default:"false"`
 }
 
+// Handle a message from the signaldbus. Parses the message, executes the query
+// and responds to signal.
 func (r *News) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
+	// parse the message
 	var args Args
 	parser, err := arg.NewParser(arg.Config{}, &args)
 	if err != nil {
@@ -78,10 +88,18 @@ func (r *News) Handle(m *signaldbus.Message, signal signalsender.SignalSender, v
 		return
 	}
 
+	// execute the query
 	var resp string
 	switch {
 	case args.Breaking != nil:
-		b, err := r.fetcher.getBreaking()
+		reader, err := r.fetcher.getBreakingReader()
+		if err != nil {
+			errMsg := fmt.Sprintf("Error: %v", err)
+			r.Log.Error(errMsg)
+			r.SendError(m, signal, errMsg)
+			return
+		}
+		b, err := r.fetcher.getBreakingFromReader(reader)
 		if err != nil {
 			errMsg := fmt.Sprintf("Error: %v", err)
 			r.Log.Error(errMsg)
@@ -89,6 +107,7 @@ func (r *News) Handle(m *signaldbus.Message, signal signalsender.SignalSender, v
 			return
 		}
 
+		// respond
 		if args.Breaking.Diff {
 			resp = r.LastBreaking.DiffStore(m.Chat, m.Sender, b)
 		} else {
@@ -96,13 +115,21 @@ func (r *News) Handle(m *signaldbus.Message, signal signalsender.SignalSender, v
 		}
 
 	default: // args.News != nil:
-		b, err := r.fetcher.getNews()
+		reader, err := r.fetcher.getNewsReader()
 		if err != nil {
 			errMsg := fmt.Sprintf("Error: %v", err)
 			r.Log.Error(errMsg)
 			r.SendError(m, signal, errMsg)
 			return
 		}
+		b, err := r.fetcher.getNewsFromReader(reader)
+		if err != nil {
+			errMsg := fmt.Sprintf("Error: %v", err)
+			r.Log.Error(errMsg)
+			r.SendError(m, signal, errMsg)
+			return
+		}
+		// respond
 		resp = b.String()
 	}
 
@@ -122,6 +149,9 @@ func (r *News) Handle(m *signaldbus.Message, signal signalsender.SignalSender, v
 		return
 	}
 }
+
+// save config file in case something has changed (last with the differ might
+// have changed)
 func (r *News) Close(virtRcv func(*signaldbus.Message)) {
 	r.Module.Close(virtRcv)
 

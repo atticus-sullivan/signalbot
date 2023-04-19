@@ -19,6 +19,8 @@ type Position struct {
 	Lat float32 `yaml:"lat"`
 }
 
+// Weather module. Should be instanciated with `NewWeather`.
+// data members are only global to be able to unmarshal them
 type Weather struct {
 	modules.Module
 	Fetcher Fetcher `yaml:"fetcher"`
@@ -30,6 +32,8 @@ type Weather struct {
 	Locations map[string]Position `yaml:"locations"`
 }
 
+// instanciates a new Weather from a configuration file
+// (cfgDir/weather.yaml)
 func NewWeather(log *slog.Logger, cfgDir string) (*Weather, error) {
 	r := Weather{
 		Module:  modules.NewModule(log, cfgDir),
@@ -53,26 +57,33 @@ func NewWeather(log *slog.Logger, cfgDir string) (*Weather, error) {
 	if err := r.Validate(); err != nil {
 		return nil, err
 	}
-	if err := r.Module.Validate(); err != nil {
-		return nil, err
-	}
-	if err := r.Fetcher.Validate(); err != nil {
-		return nil, err
-	}
 
 	return &r, nil
 }
 
+// validates the weather struct
 func (r *Weather) Validate() error {
+	// validate the generic module first
+	if err := r.Module.Validate(); err != nil {
+		return err
+	}
+	// validate the fetcher
+	if err := r.Fetcher.Validate(); err != nil {
+		return err
+	}
 	return nil
 }
 
+// specifies the arguments when handling a request to this module
 type Args struct {
 	Where string `arg:"positional"`
 	// When  int    `arg:"-d,--day" default:"0"`
 }
 
+// Handle a message from the signaldbus. Parses the message, executes the query
+// and responds to signal.
 func (r *Weather) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
+	// parse the message
 	var args Args
 	parser, err := arg.NewParser(arg.Config{}, &args)
 	if err != nil {
@@ -108,13 +119,24 @@ func (r *Weather) Handle(m *signaldbus.Message, signal signalsender.SignalSender
 		return
 	}
 
-	resp, err := r.Fetcher.get(loc)
+	// execute the query
+	reader, err := r.Fetcher.getReader(loc)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error: %v", err)
 		r.Log.Error(errMsg)
 		r.SendError(m, signal, errMsg)
 		return
 	}
+	defer reader.Close()
+	resp, err := r.Fetcher.getFromReader(reader)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error: %v", err)
+		r.Log.Error(errMsg)
+		r.SendError(m, signal, errMsg)
+		return
+	}
+
+	// respond
 	_, err = signal.Respond(resp.String(), []string{}, m, true)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error: %v", err)
@@ -124,17 +146,19 @@ func (r *Weather) Handle(m *signaldbus.Message, signal signalsender.SignalSender
 	}
 }
 
+// track amount of calls made in the current minute, day and month
 type calls struct {
-	MonthDate  time.Time `yaml:"monthDate"`
-	MonthCalls uint      `yaml:"monthCalls"`
+	MinuteDate  time.Time `yaml:"minuteDate"`
+	MinuteCalls uint      `yaml:"minuteCalls"`
 
 	DayDate  time.Time `yaml:"dayDate"`
 	DayCalls uint      `yaml:"dayCalls"`
 
-	MinuteDate  time.Time `yaml:"minuteDate"`
-	MinuteCalls uint      `yaml:"minuteCalls"`
+	MonthDate  time.Time `yaml:"monthDate"`
+	MonthCalls uint      `yaml:"monthCalls"`
 }
 
+// check and increase the quota of the current minute, day and month
 func (w *Weather) incQuota() (bool, error) {
 	fn := filepath.Join(w.ConfigDir, "openweather.calls")
 

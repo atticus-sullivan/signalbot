@@ -1,7 +1,8 @@
 package fernsehserien
 
 import (
-	"fmt"
+	"errors"
+	"io"
 	"net/http"
 	"sort"
 	"strings"
@@ -9,6 +10,18 @@ import (
 
 	"github.com/andybalholm/cascadia"
 	"golang.org/x/net/html"
+)
+
+var (
+	ErrNetwork        error = errors.New("Error retreiving from network")
+	ErrDateNotFound   error = errors.New("Date not found")
+	ErrSenderNotFound error = errors.New("Sender not found")
+)
+
+var (
+	cascItems  cascadia.Matcher = cascadia.MustCompile("[itemtype=\"http://schema.org/BroadcastEvent\"]:not(.termin-vergangenheit)")
+	cascDate   cascadia.Matcher = cascadia.MustCompile("[itemprop=\"startDate\"]")
+	cascSender cascadia.Matcher = cascadia.MustCompile("[itemprop=\"name\"]")
 )
 
 type sending struct {
@@ -22,6 +35,9 @@ func (b sending) AddString() string {
 }
 func (b sending) RemString() string {
 	return "< " + b.String()
+}
+func (b sending) Equals(o sending) bool {
+	return b == o
 }
 
 func (b sending) String() string {
@@ -55,33 +71,29 @@ func (b sendings) String() string {
 	return builder.String()
 }
 
-type Fetcher struct {
-}
+// fetches stuff. Maybe some day this will have data members (e.g. if caching
+// is implemented)
+type Fetcher struct{}
 
-func (f *Fetcher) get(urls map[string]string, unavailableSenders map[string]bool) (sendings, error) {
+// parse the content from an arbitrary reader (can be a file, a network
+// response body or something else)
+func (f *Fetcher) getFromReaders(readers map[string]io.ReadCloser, unavailableSenders map[string]bool) (sendings, error) {
 	var ret sendings
 	var ret_old sendings
-	for name, url := range urls {
-		resp, err := http.Get(url)
+
+	for name, reader := range readers {
+		root, err := html.Parse(reader)
 		if err != nil {
 			return nil, err
 		}
 
-		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("")
-		}
-
-		root, err := html.Parse(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		items := cascadia.QueryAll(root, cascadia.MustCompile("[itemtype=\"http://schema.org/BroadcastEvent\"]:not(.termin-vergangenheit)"))
+		items := cascadia.QueryAll(root, cascItems)
+		// expand the ret slice by the length of the items slice
 		ret, ret_old = make(sendings, len(ret), len(ret)+len(items)), ret
 		copy(ret, ret_old)
 		for _, i := range items {
 
-			dateN := cascadia.Query(i, cascadia.MustCompile("[itemprop=\"startDate\"]"))
+			dateN := cascadia.Query(i, cascDate)
 			var date time.Time
 			for _, attr := range dateN.Attr {
 				if attr.Key == "datetime" {
@@ -92,10 +104,10 @@ func (f *Fetcher) get(urls map[string]string, unavailableSenders map[string]bool
 				}
 			}
 			if date.IsZero() {
-				return nil, fmt.Errorf("")
+				return nil, ErrDateNotFound
 			}
 
-			senderN := cascadia.Query(i, cascadia.MustCompile("[itemprop=\"name\"]"))
+			senderN := cascadia.Query(i, cascSender)
 			var sender string
 			for _, attr := range senderN.Attr {
 				if attr.Key == "content" {
@@ -103,7 +115,7 @@ func (f *Fetcher) get(urls map[string]string, unavailableSenders map[string]bool
 				}
 			}
 			if sender == "" {
-				return nil, fmt.Errorf("")
+				return nil, ErrSenderNotFound
 			}
 			if val, unavailable := unavailableSenders[sender]; unavailable && val {
 				continue
@@ -120,5 +132,23 @@ func (f *Fetcher) get(urls map[string]string, unavailableSenders map[string]bool
 	sort.Slice(ret, func(i, j int) bool {
 		return ret[i].Date.Before(ret[j].Date)
 	})
+	return ret, nil
+}
+
+// get the content from the internet
+func (f *Fetcher) getReaders(urls map[string]string) (map[string]io.ReadCloser, error) {
+	ret := make(map[string]io.ReadCloser)
+	for name, url := range urls {
+		resp, err := http.Get(url)
+		if err != nil {
+			return nil, err
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, ErrNetwork
+		}
+
+		ret[name] = resp.Body
+	}
 	return ret, nil
 }

@@ -17,9 +17,9 @@ type Handler interface {
 // config for a handler. Can be parsed from yaml
 // TODO note on concurrency
 type HandlerCfg struct {
-	Prefixes []string              `yaml:"prefixes"`
-	Help     string                `yaml:"help"`
-	Access   Accesscontrol         `yaml:"access"`
+	Prefixes []string      `yaml:"prefixes"`
+	Help     string        `yaml:"help"`
+	Access   Accesscontrol `yaml:"access"`
 }
 
 // validate the stored data

@@ -11,6 +11,12 @@ import (
 	"golang.org/x/net/html"
 )
 
+var (
+	cascVoxItems cascadia.Matcher = cascadia.MustCompile(".voxde-epg-item")
+	cascVoxTime  cascadia.Matcher = cascadia.MustCompile(".time")
+	cascVoxTitle cascadia.Matcher = cascadia.MustCompile(".title")
+)
+
 type Vox struct {
 	ScraperBase
 }
@@ -28,11 +34,11 @@ func (s *Vox) Parse(r io.ReadCloser, ret chan<- show.Show, now time.Time) {
 		return
 	}
 
-	items := cascadia.QueryAll(root, cascadia.MustCompile(".voxde-epg-item"))
+	items := cascadia.QueryAll(root, cascVoxItems)
 	s.Log.Debug(fmt.Sprintf("#Items: %v", len(items)))
 	for _, i := range items {
-		t := cascadia.Query(i, cascadia.MustCompile(".time"))
-		name := cascadia.Query(i, cascadia.MustCompile(".title"))
+		t := cascadia.Query(i, cascVoxTime)
+		name := cascadia.Query(i, cascVoxTitle)
 		if t == nil || t.FirstChild == nil || name == nil || name.FirstChild == nil {
 			s.Log.Warn(fmt.Sprintf("Error: %v", "failed to parse item, unexpected structure"))
 			continue
@@ -44,7 +50,7 @@ func (s *Vox) Parse(r io.ReadCloser, ret chan<- show.Show, now time.Time) {
 		}
 		date = time.Date(now.Year(), now.Month(), now.Day(), date.Hour(), date.Minute(), date.Second(), date.Nanosecond(), s.Location)
 		ret <- show.Show{
-			Time: date,
+			Date: date,
 			Name: strings.TrimSpace(name.FirstChild.Data),
 		}
 	}

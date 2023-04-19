@@ -16,6 +16,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// fernsehserien module. Should be instanciated with `NewFernsehserien`.
+// data members are only global to be able to unmarshal them
 type Fernsehserien struct {
 	modules.Module
 
@@ -26,10 +28,12 @@ type Fernsehserien struct {
 	Lasts              differ.Differ[string, string, sending] `yaml:"lasts"` // stores last chat->user->sending
 }
 
+// instanciates a new Fernsehserien from a configuration file
+// (cfgDir/fernsehserien.yaml)
 func NewFernsehserien(log *slog.Logger, cfgDir string) (*Fernsehserien, error) {
 	r := Fernsehserien{
-		Module:  modules.NewModule(log, cfgDir),
-		Lasts:   make(differ.Differ[string, string, sending]),
+		Module: modules.NewModule(log, cfgDir),
+		Lasts:  make(differ.Differ[string, string, sending]),
 	}
 
 	f, err := os.Open(filepath.Join(r.ConfigDir, "fernsehserien.yaml"))
@@ -45,6 +49,13 @@ func NewFernsehserien(log *slog.Logger, cfgDir string) (*Fernsehserien, error) {
 		return nil, err
 	}
 
+	if r.Aliases == nil {
+		r.Aliases = make(map[string][]string)
+	}
+	if r.Series == nil {
+		r.Series = make(map[string]string)
+	}
+
 	all := make([]string, 0, len(r.Series))
 	for s := range r.Series {
 		r.Aliases[s] = []string{s}
@@ -56,14 +67,16 @@ func NewFernsehserien(log *slog.Logger, cfgDir string) (*Fernsehserien, error) {
 	if err := r.Validate(); err != nil {
 		return nil, err
 	}
-	if err := r.Module.Validate(); err != nil {
-		return nil, err
-	}
 
 	return &r, nil
 }
 
+// validate a fernsehserien struct
 func (r *Fernsehserien) Validate() error {
+	// validate the generic module first
+	if err := r.Module.Validate(); err != nil {
+		return err
+	}
 	for alias, resolvedL := range r.Aliases {
 		for _, resolved := range resolvedL {
 			if _, ok := r.Series[resolved]; !ok {
@@ -74,6 +87,7 @@ func (r *Fernsehserien) Validate() error {
 	return nil
 }
 
+// specifies the arguments when handling a request to this module
 type Args struct {
 	Which  string `arg:"positional"`
 	Insert string `arg:"-i,--insert"`
@@ -82,7 +96,10 @@ type Args struct {
 	Data   bool   `arg:"-d,--data" default:"true"`
 }
 
+// Handle a message from the signaldbus. Parses the message, executes the query
+// and responds to signal.
 func (r *Fernsehserien) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
+	// parse the message
 	var args Args
 	parser, err := arg.NewParser(arg.Config{}, &args)
 	if err != nil {
@@ -130,7 +147,20 @@ func (r *Fernsehserien) Handle(m *signaldbus.Message, signal signalsender.Signal
 		}
 	}
 
-	items, err := r.fetcher.get(urls, r.UnavailableSenders)
+	// execute the query
+	readers, err := r.fetcher.getReaders(urls)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error: %v", err)
+		r.Log.Error(errMsg)
+		r.SendError(m, signal, errMsg)
+		return
+	}
+	defer func() {
+		for _, r := range readers {
+			r.Close()
+		}
+	}()
+	items, err := r.fetcher.getFromReaders(readers, r.UnavailableSenders)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error: %v", err)
 		r.Log.Error(errMsg)
@@ -138,6 +168,7 @@ func (r *Fernsehserien) Handle(m *signaldbus.Message, signal signalsender.Signal
 		return
 	}
 
+	// respond
 	resp := strings.Builder{}
 	if args.Data {
 		resp.WriteString(items.String())
@@ -169,13 +200,15 @@ func (r *Fernsehserien) Handle(m *signaldbus.Message, signal signalsender.Signal
 	}
 }
 
+// save config file in case something has changed (module allows to add new
+// series during runtime)
 func (r *Fernsehserien) Close(virtRcv func(*signaldbus.Message)) {
 	r.Module.Close(virtRcv)
 
 	delete(r.Aliases, "all") // "all" alias is always a generated one
 	f, err := os.Create(filepath.Join(r.ConfigDir, "fernsehserien.yaml"))
 	if err != nil {
-		r.Log.Error(fmt.Sprintf("Error opening 'buechertreff.yaml': %v", err))
+		r.Log.Error(fmt.Sprintf("Error opening 'fernsehserien.yaml': %v", err))
 	}
 	defer f.Close()
 
@@ -183,6 +216,6 @@ func (r *Fernsehserien) Close(virtRcv func(*signaldbus.Message)) {
 	defer e.Close()
 	err = e.Encode(r)
 	if err != nil {
-		r.Log.Error(fmt.Sprintf("Error endcoding to 'buechertreff.yaml': %v", err))
+		r.Log.Error(fmt.Sprintf("Error endcoding to 'fernsehserien.yaml': %v", err))
 	}
 }

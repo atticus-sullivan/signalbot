@@ -1,7 +1,8 @@
 package buechertreff
 
 import (
-	"fmt"
+	"errors"
+	"io"
 	"net/http"
 	"strings"
 
@@ -9,6 +10,22 @@ import (
 	"golang.org/x/net/html"
 )
 
+var (
+	ErrNetwork error = errors.New("Error retreiving from network")
+
+	ErrParsePos  error = errors.New("Error parsing position")
+	ErrParseName error = errors.New("Error parsing name")
+	ErrParsePub  error = errors.New("Error parsing publication year")
+)
+
+var (
+	cascItems cascadia.Matcher = cascadia.MustCompile(".containerHeadline")
+	cascPos   cascadia.Matcher = cascadia.MustCompile("[itemprop=\"position\"]")
+	cascName  cascadia.Matcher = cascadia.MustCompile("[itemprop=\"name\"]")
+	cascPub   cascadia.Matcher = cascadia.MustCompile("[itemprop=\"datePublished\"]")
+)
+
+// represents one book
 type bookItem struct {
 	pos      string
 	name     string
@@ -16,6 +33,7 @@ type bookItem struct {
 	pub      string
 }
 
+// implements stringer
 func (b bookItem) String() string {
 	builder := strings.Builder{}
 
@@ -32,8 +50,10 @@ func (b bookItem) String() string {
 	return builder.String()
 }
 
+// multiple books (new type so that this can implement stringer new)
 type bookItems []bookItem
 
+// implements stringer
 func (b bookItems) String() string {
 	builder := strings.Builder{}
 
@@ -51,47 +71,42 @@ func (b bookItems) String() string {
 	return builder.String()
 }
 
-type Fetcher struct {
-}
+// fetches stuff. Maybe some day this will have data members (e.g. if caching
+// is implemented)
+type Fetcher struct{}
 
-func (f *Fetcher) get(url string) (bookItems, error) {
-	resp, err := http.Get(url)
+// parse the content from an arbitrary reader (can be a file, a network
+// response body or something else)
+func (f *Fetcher) getFromReader(r io.Reader) (bookItems, error) {
+	root, err := html.Parse(r)
 	if err != nil {
 		return nil, err
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("")
-	}
-
-	root, err := html.Parse(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	items := cascadia.QueryAll(root, cascadia.MustCompile(".containerHeadline"))
+	items := cascadia.QueryAll(root, cascItems)
 	bookItems := make(bookItems, 0, len(items))
 	for _, i := range items {
 		it := bookItem{}
 
-		posN := cascadia.Query(i, cascadia.MustCompile("[itemprop=\"position\"]"))
+		posN := cascadia.Query(i, cascPos)
 		if posN == nil || posN.FirstChild == nil {
-			return nil, fmt.Errorf("")
+			return nil, ErrParsePos
 		}
 		it.pos = strings.TrimSpace(posN.FirstChild.Data)
 
-		nameN := cascadia.Query(i, cascadia.MustCompile("[itemprop=\"name\"]"))
+		nameN := cascadia.Query(i, cascName)
 		if nameN == nil || nameN.FirstChild == nil {
-			return nil, fmt.Errorf("")
+			return nil, ErrParseName
 		}
 		it.name = strings.TrimSpace(nameN.FirstChild.Data)
 
-		pubN := cascadia.Query(i, cascadia.MustCompile("[itemprop=\"datePublished\"]"))
+		pubN := cascadia.Query(i, cascPub)
 		if pubN == nil || pubN.FirstChild == nil {
-			return nil, fmt.Errorf("")
+			return nil, ErrParsePub
 		}
 		it.pub = strings.TrimSpace(pubN.FirstChild.Data)
 
+		// allowed to be missing
 		origNameN := pubN.PrevSibling
 		if origNameN != nil && origNameN.Type == html.TextNode {
 			it.origName = strings.TrimSpace(origNameN.Data)
@@ -100,4 +115,18 @@ func (f *Fetcher) get(url string) (bookItems, error) {
 	}
 
 	return bookItems, nil
+}
+
+// get the content from the internet
+func (f *Fetcher) getReader(url string) (io.ReadCloser, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, ErrNetwork
+	}
+
+	return resp.Body, nil
 }

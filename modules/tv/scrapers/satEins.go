@@ -12,6 +12,14 @@ import (
 	"golang.org/x/net/html"
 )
 
+var (
+	cascSatEinsJson cascadia.Matcher = cascadia.MustCompile("#__NEXT_DATA__")
+
+	cascSatEinsItems cascadia.Matcher = cascadia.MustCompile("[data-testid=\"epg-teaser-card\"]")
+	cascSatEinsEles  cascadia.Matcher = cascadia.MustCompile("span")
+	cascSatEinsSub   cascadia.Matcher = cascadia.MustCompile("[data-testid=\"teaser-card-meta-info\"]")
+)
+
 type SatEins struct {
 	ScraperBase
 	Url string
@@ -83,14 +91,14 @@ func (s *SatEins) parseJsonEle(ele sat1JsonTeaser, now time.Time) (show.Show, er
 	date = time.Date(now.Year(), now.Month(), now.Day(), date.Hour(), date.Minute(), date.Second(), date.Nanosecond(), s.Location)
 
 	retS := show.Show{
-		Time: date,
+		Date: date,
 		Name: name.String(),
 	}
 	return retS, nil
 }
 
 func (s *SatEins) parseJson(ret chan<- show.Show, now time.Time, root *html.Node) error {
-	jsonNode := cascadia.Query(root, cascadia.MustCompile("#__NEXT_DATA__"))
+	jsonNode := cascadia.Query(root, cascSatEinsJson)
 	if jsonNode == nil || jsonNode.FirstChild == nil {
 		s.Log.Warn(fmt.Sprintf("Error: %v", "failed to get json"))
 		return fmt.Errorf("")
@@ -130,11 +138,11 @@ func (s *SatEins) parseJson(ret chan<- show.Show, now time.Time, root *html.Node
 }
 
 func (s *SatEins) parseHtml(ret chan<- show.Show, now time.Time, root *html.Node) error {
-	items := cascadia.QueryAll(root, cascadia.MustCompile("[data-testid=\"epg-teaser-card\"]")) // missing "epg-live-teaser" but this only contains "bis HH:MM", no start date
+	items := cascadia.QueryAll(root, cascSatEinsItems) // missing "epg-live-teaser" but this only contains "bis HH:MM", no start date
 	s.Log.Debug(fmt.Sprintf("#Items: %v", len(items)))
 	// lastDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, s.Location)
 	for _, i := range items {
-		eles := cascadia.QueryAll(i, cascadia.MustCompile("span"))
+		eles := cascadia.QueryAll(i, cascSatEinsEles)
 		if len(eles) < 2 || len(eles) > 3 || eles[0].FirstChild == nil || eles[1].FirstChild == nil {
 			s.Log.Warn(fmt.Sprintf("Error: %v", "failed to parse item, unexpected structure"))
 			continue
@@ -152,7 +160,7 @@ func (s *SatEins) parseHtml(ret chan<- show.Show, now time.Time, root *html.Node
 		name := strings.TrimSpace(eles[1].FirstChild.Data)
 
 		// parse potential subtitle
-		sub := cascadia.Query(i, cascadia.MustCompile("[data-testid=\"teaser-card-meta-info\"]"))
+		sub := cascadia.Query(i, cascSatEinsSub)
 		if sub == nil && len(eles) == 3 {
 			s.Log.Warn(fmt.Sprintf("Error: %v", "failed to parse subtitle, unexpected structure"))
 			continue
@@ -162,7 +170,7 @@ func (s *SatEins) parseHtml(ret chan<- show.Show, now time.Time, root *html.Node
 		}
 
 		retS := show.Show{
-			Time: date,
+			Date: date,
 			Name: strings.TrimSpace(name),
 		}
 		ret <- retS

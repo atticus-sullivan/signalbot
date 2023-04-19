@@ -153,7 +153,6 @@ func (r *Periodic) Rm(rm *rmArgs, m signaldbus.Message, signal signalsender.Sign
 	}
 	r.Log.Info(fmt.Sprintf("canceling event with ID: %d (%s)", rm.Id, event.String()))
 	r.perioder.Remove(rm.Id)
-	event.Cancel()
 	if _, err := signal.Respond(fmt.Sprintf("Removed %v\n", event.String()), nil, &m, true); err != nil {
 		r.Log.Error(fmt.Sprintf("error sending rm success msg: %v", err))
 	}

@@ -10,18 +10,18 @@ import (
 )
 
 type Help struct {
-	log         *slog.Logger        `yaml:"-"`
-	ConfigDir   string              `yaml:"-"`
-	Handlers map[string]HandlerCfg `yaml:"-"`
-	self              string `yaml:"-"`
+	log       *slog.Logger          `yaml:"-"`
+	ConfigDir string                `yaml:"-"`
+	Handlers  map[string]HandlerCfg `yaml:"-"`
+	self      string                `yaml:"-"`
 }
 
 func NewHelp(log *slog.Logger, cfgDir string, handlers map[string]HandlerCfg, self string) (*Help, error) {
 	r := Help{
 		log:       log,
 		ConfigDir: cfgDir,
-		Handlers: handlers,
-		self: self,
+		Handlers:  handlers,
+		self:      self,
 	}
 
 	// f, err := os.Open(filepath.Join(r.ConfigDir, "help.yaml"))
@@ -58,7 +58,7 @@ func (r *Help) sendError(m *signaldbus.Message, signal signalsender.SignalSender
 func (r *Help) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
 	var err error
 	builder := strings.Builder{}
-	for _,handler := range r.Handlers {
+	for _, handler := range r.Handlers {
 		if err := handler.Access.Check(m.Sender, m.Chat); err != nil {
 			continue
 		}

@@ -2,11 +2,20 @@ package news
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
+	"io"
 	"net/http"
 	"regexp"
 	"strings"
 	"time"
+)
+
+var (
+	ErrNetwork error = errors.New("Error retreiving from network")
+)
+
+var (
+	reHtmlTags *regexp.Regexp = regexp.MustCompile("<.*?>")
 )
 
 func mustLoadLocation(l string) *time.Location {
@@ -19,8 +28,6 @@ func mustLoadLocation(l string) *time.Location {
 
 var loc *time.Location = mustLoadLocation("Europe/Berlin")
 
-// TODO maybe make this type anonymous -> use struct{} in entry struct instead
-// of contentLine
 type contentLine struct {
 	Value string `json:"value" yaml:"value"`
 	Type  string `json:"type" yaml:"type"`
@@ -36,6 +43,7 @@ type entry struct {
 	Content       []contentLine `json:"content" yaml:"content"`
 }
 
+// stringer
 func (e *entry) String() string {
 	if len(e.Content) <= 0 {
 		return ""
@@ -46,15 +54,17 @@ func (e *entry) String() string {
 	builder.WriteString(e.Topline)
 	builder.WriteRune('\n')
 	// strip html tags
-	builder.WriteString(regexp.MustCompile("<.*?>").ReplaceAllLiteralString(e.Content[0].Value, ""))
+	builder.WriteString(reHtmlTags.ReplaceAllLiteralString(e.Content[0].Value, ""))
 	builder.WriteRune('\n')
 	builder.WriteString(e.Webpage)
 
 	return builder.String()
 }
 
+// new type so that it can implement stringer
 type entries []entry
 
+// stringer
 func (e *entries) String() string {
 	builder := strings.Builder{}
 	first := true
@@ -78,16 +88,22 @@ type homepageResp struct {
 }
 
 type breakingResp struct {
+	BreakingNews breaking `yaml:"breakingNews"`
+}
+
+type breaking struct {
 	Headline string `json:"headline" yaml:"headline"`
 	Text     string `json:"text" yaml:"text"`
 	Url      string `json:"url" yaml:"url"`
 	LinkText string `json:"linkText" yaml:"linkText"`
+	Id       string `json:"id" yaml:"id"`
 
 	DateS string    `json:"date"`
 	Date  time.Time `yaml:"date"`
 }
 
-func (e *breakingResp) String() string {
+// stringer
+func (e *breaking) String() string {
 	builder := strings.Builder{}
 
 	builder.WriteString("⚡️")
@@ -98,26 +114,34 @@ func (e *breakingResp) String() string {
 	builder.WriteRune('\n')
 	builder.WriteString(e.Text)
 	builder.WriteRune('\n')
-	builder.WriteRune('\n')
 	builder.WriteString(e.Url)
 
 	return builder.String()
 }
-func (e breakingResp) AddString() string {
+
+// differ
+func (e breaking) AddString() string {
 	return e.String()
 }
 
 // removal should not be displayed
-func (e breakingResp) RemString() string {
+// differ
+func (e breaking) RemString() string {
 	return ""
 }
 
-func (e *breakingResp) IsZero() bool {
+func (e breaking) Equals(o breaking) bool {
+	return e.Id == o.Id
+}
+
+func (e *breaking) IsZero() bool {
 	return e.Text == ""
 }
 
-type breakings []breakingResp
+// new type so that it can implement stringer
+type breakings []breaking
 
+// stringer
 func (e *breakings) String() string {
 	builder := strings.Builder{}
 	first := true
@@ -132,21 +156,27 @@ func (e *breakings) String() string {
 	return builder.String()
 }
 
-type Fetcher struct {
-}
+// fetches stuff. Maybe some day this will have data members (e.g. if caching
+// is implemented)
+type Fetcher struct{}
 
-func (f *Fetcher) getNews() (entries, error) {
+// get the content from the internet
+func (f *Fetcher) getNewsReader() (io.ReadCloser, error) {
 	response, err := http.Get("https://www.tagesschau.de/api2/homepage/")
 	if err != nil {
 		return nil, err
 	}
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("fetching failed with status: %s", response.Status)
+		return nil, ErrNetwork
 	}
-	defer response.Body.Close()
+	return response.Body, nil
+}
 
+// parse the content from an arbitrary reader (can be a file, a network
+// response body or something else)
+func (f *Fetcher) getNewsFromReader(reader io.Reader) (entries, error) {
 	var resp homepageResp
-	if err := json.NewDecoder(response.Body).Decode(&resp); err != nil {
+	if err := json.NewDecoder(reader).Decode(&resp); err != nil {
 		return nil, err
 	}
 	// remove weather news if present
@@ -159,20 +189,27 @@ func (f *Fetcher) getNews() (entries, error) {
 	return resp.News, nil
 }
 
-func (f *Fetcher) getBreaking() (breakings, error) {
+// get the content from the internet
+func (f *Fetcher) getBreakingReader() (io.ReadCloser, error) {
 	response, err := http.Get("https://www.tagesschau.de/ipa/v1/web/headerapp/")
 	if err != nil {
 		return nil, err
 	}
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("fetching failed with status: %s", response.Status)
+		return nil, ErrNetwork
 	}
-	defer response.Body.Close()
+	return response.Body, nil
+}
 
-	var resp breakingResp
-	if err := json.NewDecoder(response.Body).Decode(&resp); err != nil {
+// parse the content from an arbitrary reader (can be a file, a network
+// response body or something else)
+func (f *Fetcher) getBreakingFromReader(reader io.ReadCloser) (breakings, error) {
+	var respB breakingResp
+	var err error
+	if err := json.NewDecoder(reader).Decode(&respB); err != nil {
 		return nil, err
 	}
+	resp := respB.BreakingNews
 
 	// resp = breakingResp{
 	// 	Headline: "Merkel kündigt Ende der Impf-Priorisierung im Juni an",

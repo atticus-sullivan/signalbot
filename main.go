@@ -32,9 +32,9 @@ func logInit() *slog.Logger {
 	// }
 	// logger := slog.New(slog.HandlerOptions{AddSource: true, ReplaceAttr: replace, Level: slog.LevelInfo}.NewTextHandler(os.Stderr))
 	logger := slog.New(tint.Options{
-		Level: slog.LevelInfo,
+		Level:      slog.LevelInfo,
 		TimeFormat: time.RFC3339,
-		NoColor: false,
+		NoColor:    false,
 	}.NewHandler(os.Stderr))
 	return logger
 }

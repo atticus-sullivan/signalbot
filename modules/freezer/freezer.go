@@ -15,11 +15,15 @@ import (
 	"golang.org/x/exp/slog"
 )
 
+// freezer module. Should be instanciated with `NewFreezer`.
+// data members are only global to be able to unmarshal them
 type Freezer struct {
 	modules.Module
 	db *freezerDB_db.DB `yaml:"-"`
 }
 
+// instanciates a new Freezer from a configuration file
+// (cfgDir/freezer.yaml)
 func NewFreezer(log *slog.Logger, cfgDir string) (*Freezer, error) {
 	r := Freezer{
 		Module: modules.NewModule(log, cfgDir),
@@ -35,22 +39,28 @@ func NewFreezer(log *slog.Logger, cfgDir string) (*Freezer, error) {
 	if err := r.Validate(); err != nil {
 		return nil, err
 	}
-	if err := r.Module.Validate(); err != nil {
-		return nil, err
-	}
 
 	return &r, nil
 }
 
+// can be used to validate the freezer struct
 func (r *Freezer) Validate() error {
+	// validate the generic module first
+	if err := r.Module.Validate(); err != nil {
+		return err
+	}
 	return nil
 }
 
+// specifies the arguments when handling a request to this module
 type Args struct {
 	ReportName *struct{} `arg:"subcommand:reportName"`
 }
 
+// Handle a message from the signaldbus. Parses the message, executes the query
+// and responds to signal.
 func (r *Freezer) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
+	// parse the message
 	var args Args
 	parser, err := arg.NewParser(arg.Config{}, &args)
 	if err != nil {
@@ -65,6 +75,7 @@ func (r *Freezer) Handle(m *signaldbus.Message, signal signalsender.SignalSender
 		return
 	}
 
+	// execute the query
 	var att []string
 	switch {
 	case args.ReportName != nil:
@@ -90,6 +101,8 @@ func (r *Freezer) Handle(m *signaldbus.Message, signal signalsender.SignalSender
 		r.SendError(m, signal, errMsg)
 		return
 	}
+
+	// respond
 	_, err = signal.Respond("", att, m, true)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error: %v", err)

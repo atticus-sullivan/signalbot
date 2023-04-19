@@ -21,6 +21,12 @@ func (s *Ard2) Get(now time.Time) (io.ReadCloser, error) {
 	return s.ScraperBase.Get(url)
 }
 
+var (
+	cascArd2Items cascadia.Matcher = cascadia.MustCompile(".accordion-item.event")
+	cascArd2Date  cascadia.Matcher = cascadia.MustCompile(".date")
+	cascArd2Title cascadia.Matcher = cascadia.MustCompile(".title")
+)
+
 func (s *Ard2) Parse(r io.ReadCloser, ret chan<- show.Show, now time.Time) {
 	defer close(ret)
 	root, err := html.Parse(r)
@@ -29,12 +35,12 @@ func (s *Ard2) Parse(r io.ReadCloser, ret chan<- show.Show, now time.Time) {
 		return
 	}
 
-	items := cascadia.QueryAll(root, cascadia.MustCompile(".accordion-item.event"))
+	items := cascadia.QueryAll(root, cascArd2Items)
 	s.Log.Debug(fmt.Sprintf("#Items: %v", len(items)))
-	lastDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, s.Location)
+	// lastDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, s.Location)
 	for _, i := range items {
-		t := cascadia.Query(i, cascadia.MustCompile(".date"))
-		name := cascadia.Query(i, cascadia.MustCompile(".title"))
+		t := cascadia.Query(i, cascArd2Date)
+		name := cascadia.Query(i, cascArd2Title)
 		if t == nil || t.FirstChild == nil || name == nil || name.FirstChild == nil {
 			s.Log.Warn(fmt.Sprintf("Error: %v", "failed to parse item, unexpected structure"))
 			continue
@@ -45,12 +51,12 @@ func (s *Ard2) Parse(r io.ReadCloser, ret chan<- show.Show, now time.Time) {
 			continue
 		}
 		date = time.Date(now.Year(), now.Month(), now.Day(), date.Hour(), date.Minute(), date.Second(), date.Nanosecond(), s.Location)
-		if date.Before(lastDate) {
-			break
-		}
-		lastDate = date
+		// if date.Before(lastDate) {
+		// 	break
+		// }
+		// lastDate = date
 		ret <- show.Show{
-			Time: date,
+			Date: date,
 			Name: strings.Trim(s.node2text(name), " ·"),
 		}
 	}

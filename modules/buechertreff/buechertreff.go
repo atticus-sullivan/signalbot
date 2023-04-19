@@ -15,12 +15,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// buechertreff module. Should be instanciated with `NewBuechertreff`.
+// data members are only global to be able to unmarshal them
 type Buechertreff struct {
 	modules.Module
 	Series  map[string]string `yaml:"series"`
 	fetcher Fetcher           `yaml:"-"`
 }
 
+// instanciates a new Buechertreff from a configuration file
+// (cfgDir/buechertreff.yaml)
 func NewBuechertreff(log *slog.Logger, cfgDir string) (*Buechertreff, error) {
 	r := Buechertreff{
 		Module:  modules.NewModule(log, cfgDir),
@@ -44,23 +48,29 @@ func NewBuechertreff(log *slog.Logger, cfgDir string) (*Buechertreff, error) {
 	if err := r.Validate(); err != nil {
 		return nil, err
 	}
-	if err := r.Module.Validate(); err != nil {
-		return nil, err
-	}
 
 	return &r, nil
 }
 
+// validates the buechertreff struct
 func (r *Buechertreff) Validate() error {
+	// validate the generic module first
+	if err := r.Module.Validate(); err != nil {
+		return err
+	}
 	return nil
 }
 
+// specifies the arguments when handling a request to this module
 type Args struct {
 	Which  string `arg:"positional"`
 	Insert string `arg:"-i,--insert"`
 }
 
+// Handle a message from the signaldbus. Parses the message, executes the query
+// and responds to signal.
 func (r *Buechertreff) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
+	// parse the message
 	var args Args
 	parser, err := arg.NewParser(arg.Config{}, &args)
 	if err != nil {
@@ -97,7 +107,16 @@ func (r *Buechertreff) Handle(m *signaldbus.Message, signal signalsender.SignalS
 		return
 	}
 
-	items, err := r.fetcher.get(url)
+	// execute the query
+	reader, err := r.fetcher.getReader(url)
+	if !ok {
+		errMsg := fmt.Sprintf("Error: %v", err)
+		r.Log.Error(errMsg)
+		r.SendError(m, signal, errMsg)
+		return
+	}
+	defer reader.Close()
+	items, err := r.fetcher.getFromReader(reader)
 	if !ok {
 		errMsg := fmt.Sprintf("Error: %v", err)
 		r.Log.Error(errMsg)
@@ -105,14 +124,18 @@ func (r *Buechertreff) Handle(m *signaldbus.Message, signal signalsender.SignalS
 		return
 	}
 
+	// respond
 	_, err = signal.Respond(items.String(), []string{}, m, true)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error: %v", err)
 		r.Log.Error(errMsg)
 		r.SendError(m, signal, errMsg)
+		return
 	}
 }
 
+// save config file in case something has changed (module allows to add new
+// series during runtime)
 func (r *Buechertreff) Close(virtRcv func(*signaldbus.Message)) {
 	r.Module.Close(virtRcv)
 

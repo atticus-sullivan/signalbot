@@ -3,6 +3,7 @@ package refectory
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -12,6 +13,19 @@ import (
 	"golang.org/x/net/html"
 )
 
+var (
+	ErrNetwork   error = errors.New("Error retreiving from network")
+	ErrParseType error = errors.New("Error parsing high level types")
+	ErrParseDesc error = errors.New("Error parsing description")
+)
+
+var (
+	cascMeal cascadia.Selector = cascadia.MustCompile(".c-schedule__list-item")
+	cascType cascadia.Selector = cascadia.MustCompile(".stwm-artname")
+	cascDesc cascadia.Selector = cascadia.MustCompile(".js-schedule-dish-description")
+)
+
+// enum with the different food categories
 type Category rune
 
 const (
@@ -22,15 +36,18 @@ const (
 	FISH  Category = '🐟'
 )
 
+// stringer
 func (c Category) String() string {
 	return string(c)
 }
 
+// represents one meal with name and a list of categories
 type Meal struct {
 	Name       string
 	Categories []Category
 }
 
+// stringer
 func (m Meal) String() string {
 	builder := strings.Builder{}
 
@@ -43,11 +60,13 @@ func (m Meal) String() string {
 	return builder.String()
 }
 
+// a menu is an enumeration of all available meals
 type Menu struct {
 	meals    map[string][]Meal
 	ordering []string
 }
 
+// stringer
 func (m Menu) String() string {
 	builder := strings.Builder{}
 
@@ -80,36 +99,17 @@ func (m Menu) String() string {
 	return builder.String()
 }
 
-// could implement caching if necessary
+// fetches stuff. (e.g. if caching can be implemented at this level)
 type Fetcher struct {
 	log *slog.Logger
 }
 
-func (f *Fetcher) getMenuString(mensa string, mensa_id uint, date time.Time) (string, error) {
-	menu, err := f.getMenu(mensa_id, date)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprintf("%s on %s\n", mensa, date.Format("2006-01-02")) + menu.String(), nil
-}
-
-func (f *Fetcher) getMenu(mensa_id uint, date time.Time) (Menu, error) {
-	root, err := f.download(mensa_id, date)
-	if err != nil {
-		return Menu{}, fmt.Errorf("Failed downloading menu for %s: %v", date.Format("2006-01-02"), err)
-	}
-	menu, err := f.parse(root)
-	if err != nil {
-		return menu, fmt.Errorf("Failed parsing menu for %s: %v", date.Format("2006-01-02"), err)
-	}
-	return menu, nil
-}
-
 var MEAL_URL_TEMPLATE string = "https://www.studentenwerk-muenchen.de/mensa/speiseplan/speiseplan_%s_%d_-de.html"
 
-var NotOpenThatDay error = errors.New("Refectory not open that day")
+var ErrNotOpenThatDay error = errors.New("Refectory not open that day")
 
-func (f *Fetcher) download(mensa_id uint, date time.Time) (*html.Node, error) {
+// get the content from the internet
+func (f *Fetcher) getReader(mensa_id uint, date time.Time) (io.ReadCloser, error) {
 	url := fmt.Sprintf(MEAL_URL_TEMPLATE, date.Format("2006-01-02"), mensa_id)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -119,38 +119,36 @@ func (f *Fetcher) download(mensa_id uint, date time.Time) (*html.Node, error) {
 
 	switch resp.StatusCode {
 	case http.StatusNotFound:
-		return nil, NotOpenThatDay
+		return nil, ErrNotOpenThatDay
 	case http.StatusOK:
 	default:
-		return nil, fmt.Errorf("Response: %s", resp.Status)
+		return nil, ErrNetwork
 	}
 
-	r, err := html.Parse(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	return r, nil
+	return resp.Body, nil
 }
 
-var (
-	selMeal cascadia.Selector = cascadia.MustCompile(".c-schedule__list-item")
-	selType cascadia.Selector = cascadia.MustCompile(".stwm-artname")
-	selDesc cascadia.Selector = cascadia.MustCompile(".js-schedule-dish-description")
-)
-
-func (f *Fetcher) parse(root *html.Node) (Menu, error) {
+// parse the content from an arbitrary reader (can be a file, a network
+// response body or something else)
+func (f *Fetcher) getFromReader(reader io.Reader) (Menu, error) {
 	menu := Menu{
 		meals:    make(map[string][]Meal),
 		ordering: make([]string, 0),
 	}
+
+	root, err := html.Parse(reader)
+	if err != nil {
+		return menu, err
+	}
+
 	// Load the HTML document
 	typeLast := ""
-	for _, meal := range cascadia.QueryAll(root, selMeal) {
+	for _, meal := range cascadia.QueryAll(root, cascMeal) {
 		// type
 		var typeStr string
-		typeNodes := cascadia.QueryAll(meal, selType)
+		typeNodes := cascadia.QueryAll(meal, cascType)
 		if len(typeNodes) != 1 {
-			return Menu{}, fmt.Errorf("invalid amount (%d) of typeNodes found", len(typeNodes))
+			return Menu{}, ErrParseType
 		}
 		if typeNodes[0].FirstChild != nil {
 			typeStr = typeNodes[0].FirstChild.Data
@@ -159,13 +157,12 @@ func (f *Fetcher) parse(root *html.Node) (Menu, error) {
 		} else {
 			typeStr = typeLast
 		}
-		// fmt.Println(typeStr)
 
 		// description
 		var descStr string
-		descNodes := cascadia.QueryAll(meal, selDesc)
+		descNodes := cascadia.QueryAll(meal, cascDesc)
 		if len(descNodes) != 1 {
-			return Menu{}, fmt.Errorf("invalid amount (%d) of descNodes found", len(descNodes))
+			return Menu{}, ErrParseDesc
 		}
 		for n := descNodes[0].FirstChild; n != nil; n = n.NextSibling {
 			if n.Type == html.TextNode {
@@ -173,7 +170,6 @@ func (f *Fetcher) parse(root *html.Node) (Menu, error) {
 				break
 			}
 		}
-		// fmt.Println(descStr)
 
 		// categories
 		cats := make([]Category, 0)
@@ -211,13 +207,12 @@ func (f *Fetcher) parse(root *html.Node) (Menu, error) {
 				}
 			}
 		}
-		// fmt.Println(cats)
 		_, ok := menu.meals[typeStr]
 		if !ok {
 			menu.meals[typeStr] = make([]Meal, 0)
 		}
 		menu.meals[typeStr] = append(menu.meals[typeStr], Meal{
-			Name:       descStr,
+			Name:       strings.TrimSpace(descStr),
 			Categories: cats,
 		})
 	}

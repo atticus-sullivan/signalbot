@@ -11,15 +11,21 @@ import (
 	"golang.org/x/net/html"
 )
 
+var (
+	cascZdfItems cascadia.Matcher = cascadia.MustCompile("li")
+	cascZdfTime  cascadia.Matcher = cascadia.MustCompile(".time")
+	cascZdfTitle cascadia.Matcher = cascadia.MustCompile(".overlay-link")
+)
+
 type Zdf struct {
 	ScraperBase
 	Timeline cascadia.Matcher
 }
 
-func NewZdf(base ScraperBase, timeline string) *Zdf {
+func NewZdf(base ScraperBase, timeline cascadia.Matcher) *Zdf {
 	return &Zdf{
 		ScraperBase: base,
-		Timeline:    cascadia.MustCompile(timeline),
+		Timeline:    timeline,
 	}
 }
 
@@ -41,12 +47,12 @@ func (s *Zdf) Parse(r io.ReadCloser, ret chan<- show.Show, now time.Time) {
 		s.Log.Warn(fmt.Sprintf("Error: %v", "failed to parse, timeline not found"))
 		return
 	}
-	items := cascadia.QueryAll(item, cascadia.MustCompile("li"))
+	items := cascadia.QueryAll(item, cascZdfItems)
 	s.Log.Debug(fmt.Sprintf("#Items: %v", len(items)))
 	lastDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, s.Location)
 	for _, i := range items {
-		t := cascadia.Query(i, cascadia.MustCompile(".time"))
-		n := cascadia.Query(i, cascadia.MustCompile(".overlay-link"))
+		t := cascadia.Query(i, cascZdfTime)
+		n := cascadia.Query(i, cascZdfTitle)
 		if t == nil || t.FirstChild == nil {
 			s.Log.Warn(fmt.Sprintf("Error: %v", "failed to parse item, unexpected structure"))
 			continue
@@ -71,7 +77,7 @@ func (s *Zdf) Parse(r io.ReadCloser, ret chan<- show.Show, now time.Time) {
 			}
 		}
 		ret <- show.Show{
-			Time: date,
+			Date: date,
 			Name: name,
 		}
 	}

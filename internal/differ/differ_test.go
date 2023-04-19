@@ -13,6 +13,9 @@ func (c content) AddString() string {
 func (c content) RemString() string {
 	return "< " + string(c)
 }
+func (c content) Equals(o content) bool {
+	return c == o
+}
 
 func TestDiff(t *testing.T) {
 	diff := make(differ.Differ[string, string, content])

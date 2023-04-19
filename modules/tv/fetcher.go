@@ -6,10 +6,13 @@ import (
 	"signalbot_go/modules/tv/scrapers"
 	"time"
 
+	"github.com/andybalholm/cascadia"
 	"golang.org/x/exp/slog"
 )
 
-// could implement caching if necessary
+// fetches stuff. Maybe some day this will have data members (e.g. if caching
+// is implemented)
+// Has to be instanciated via `NewFetcher`
 type Fetcher struct {
 	log            *slog.Logger
 	loc            *time.Location
@@ -17,6 +20,13 @@ type Fetcher struct {
 	senderScrapers []subFetcher
 }
 
+var (
+	cascZdf_zdf  cascadia.Matcher = cascadia.MustCompile(".timeline-ZDF")
+	cascZdf_info cascadia.Matcher = cascadia.MustCompile(".timeline-ZDFinfo")
+	cascZdf_neo  cascadia.Matcher = cascadia.MustCompile(".timeline-ZDFneo")
+)
+
+// instanciates a new Fetcher object
 func NewFetcher(log *slog.Logger, loc *time.Location, timeout time.Duration) *Fetcher {
 	f := &Fetcher{
 		log:     log,
@@ -39,14 +49,15 @@ func NewFetcher(log *slog.Logger, loc *time.Location, timeout time.Duration) *Fe
 			&scrapers.Ard2{ScraperBase: scrapers.NewScraperBase(log, "hr", loc), Url: "https://programm.ard.de/TV/Programm/Sender?sender=28108&datum=%s&hour=0&archiv=1"},
 			&scrapers.Ard2{ScraperBase: scrapers.NewScraperBase(log, "phoenix", loc), Url: "https://programm.ard.de/TV/Programm/Sender?sender=28725&datum=%s&hour=0&archiv=1"},
 
-			scrapers.NewZdf(scrapers.NewScraperBase(log, "zdf", loc), ".timeline-ZDF"),
-			scrapers.NewZdf(scrapers.NewScraperBase(log, "zdfInfo", loc), ".timeline-ZDFinfo"),
-			scrapers.NewZdf(scrapers.NewScraperBase(log, "zdfNeo", loc), ".timeline-ZDFneo"),
+			scrapers.NewZdf(scrapers.NewScraperBase(log, "zdf", loc), cascZdf_zdf),
+			scrapers.NewZdf(scrapers.NewScraperBase(log, "zdfInfo", loc), cascZdf_info),
+			scrapers.NewZdf(scrapers.NewScraperBase(log, "zdfNeo", loc), cascZdf_neo),
 		},
 	}
 	return f
 }
 
+// subfetcher fetches the shows of one sender
 type subFetcher interface {
 	Get(time.Time) (io.ReadCloser, error)
 	// GetFromFile() (io.ReadCloser, error)
@@ -54,16 +65,15 @@ type subFetcher interface {
 	Name() string
 }
 
-// Idea: add Url() function ->  build set of URLs, download and parse them to
-// *html.Node -> sender parsing. This would reduce the amount of requests to
-// the zdf page
-
+// queries all senders for shows and collects the result in a map (sender ->
+// shows)
 func (fetcher *Fetcher) Get() map[string][]show.Show {
 	channels := make([]chan show.Show, len(fetcher.senderScrapers))
 
 	now := time.Now()
 	for iS, fS := range fetcher.senderScrapers {
-		// make copies of the loop variables before capturing them in the goroutine
+		// make copies of the loop variables before capturing them in the
+		// goroutine
 		i := iS
 		f := fS
 		channels[i] = make(chan show.Show)

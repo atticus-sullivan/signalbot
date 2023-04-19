@@ -141,7 +141,7 @@ func (t *Tv) format(target time.Time, postOrig uint) (string, error) {
 			if post == 0 {
 				break
 			}
-			if s.Time.Compare(target) == +1 {
+			if s.Date.Compare(target) == +1 {
 				builder.WriteString(last.String())
 				builder.WriteRune('\n')
 				post--

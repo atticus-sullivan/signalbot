@@ -11,6 +11,11 @@ import (
 	"golang.org/x/net/html"
 )
 
+var (
+	cascRtlIIItems cascadia.Matcher = cascadia.MustCompile("epg-broadcast-row")
+	cascRtlIITitle cascadia.Matcher = cascadia.MustCompile(".teaser-title")
+)
+
 type Rtl2 struct {
 	ScraperBase
 }
@@ -28,7 +33,7 @@ func (s *Rtl2) Parse(r io.ReadCloser, ret chan<- show.Show, now time.Time) {
 		return
 	}
 
-	items := cascadia.QueryAll(root, cascadia.MustCompile("epg-broadcast-row"))
+	items := cascadia.QueryAll(root, cascRtlIIItems)
 	s.Log.Debug(fmt.Sprintf("#Items: %v", len(items)))
 	for _, i := range items {
 		var date time.Time
@@ -44,7 +49,7 @@ func (s *Rtl2) Parse(r io.ReadCloser, ret chan<- show.Show, now time.Time) {
 
 		name := strings.Builder{}
 		first := true
-		for _, t := range cascadia.QueryAll(i, cascadia.MustCompile(".teaser-title")) {
+		for _, t := range cascadia.QueryAll(i, cascRtlIITitle) {
 			if t.FirstChild == nil {
 				s.Log.Warn(fmt.Sprintf("Error: %v", "failed to parse item, unexpected structure"))
 				continue
@@ -58,7 +63,7 @@ func (s *Rtl2) Parse(r io.ReadCloser, ret chan<- show.Show, now time.Time) {
 		}
 
 		retS := show.Show{
-			Time: date,
+			Date: date,
 			Name: strings.TrimSpace(name.String()),
 		}
 		ret <- retS

@@ -17,8 +17,8 @@ func (a *Accesscontrol) Validate() error {
 	if err := a.Default.Validate(); err != nil {
 		return err
 	}
-	
-	for user,actA := range a.Children {
+
+	for user, actA := range a.Children {
 		if !validPhoneNr(user) {
 			return ErrInvalidUser
 		}
@@ -26,7 +26,7 @@ func (a *Accesscontrol) Validate() error {
 		if err := actA.Default.Validate(); err != nil {
 			return err
 		}
-		for chat,actB := range actA.Children {
+		for chat, actB := range actA.Children {
 			if !validChat(chat) {
 				return ErrInvalidChat
 			}
