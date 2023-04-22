@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/andybalholm/cascadia"
+	"github.com/jellydator/ttlcache/v3"
 	"golang.org/x/exp/slog"
 )
 
@@ -18,6 +19,7 @@ type Fetcher struct {
 	loc            *time.Location
 	timeout        time.Duration
 	senderScrapers []subFetcher
+	cache          *ttlcache.Cache[string, map[string][]show.Show]
 }
 
 var (
@@ -53,6 +55,7 @@ func NewFetcher(log *slog.Logger, loc *time.Location, timeout time.Duration) *Fe
 			scrapers.NewZdf(scrapers.NewScraperBase(log, "zdfInfo", loc), cascZdf_info),
 			scrapers.NewZdf(scrapers.NewScraperBase(log, "zdfNeo", loc), cascZdf_neo),
 		},
+		cache: ttlcache.New(ttlcache.WithTTL[string, map[string][]show.Show](30*time.Minute), ttlcache.WithDisableTouchOnHit[string, map[string][]show.Show]()),
 	}
 	return f
 }
@@ -68,6 +71,10 @@ type subFetcher interface {
 // queries all senders for shows and collects the result in a map (sender ->
 // shows)
 func (fetcher *Fetcher) Get() map[string][]show.Show {
+	if v := fetcher.cache.Get("all"); v != nil && !v.IsExpired() {
+		return v.Value()
+	}
+
 	channels := make([]chan show.Show, len(fetcher.senderScrapers))
 
 	now := time.Now()
@@ -143,6 +150,8 @@ collect:
 			channels[i] = nil // disable channel in select as send/rcv on nil block forever
 		}
 	}
+
+	fetcher.cache.Set("all", res, ttlcache.DefaultTTL)
 	return res
 }
 
