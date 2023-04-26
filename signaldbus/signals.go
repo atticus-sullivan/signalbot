@@ -160,11 +160,12 @@ func NewSyncMessage(v *dbus.Signal, self string) *SyncMessage {
 	// fill chat
 	if len(msg.GroupId) > 0 {
 		msg.Chat = hex.EncodeToString(msg.GroupId)
+	} else {
+		if msg.Sender == self {
+			msg.Chat = msg.Receiver
+		}
+		msg.Chat = msg.Sender
 	}
-	if msg.Sender == self {
-		msg.Chat = msg.Receiver
-	}
-	msg.Chat = msg.Sender
 
 	return &msg
 }
@@ -190,11 +191,12 @@ func NewMessage(v *dbus.Signal, self string) *Message {
 	// fill chat
 	if len(msg.GroupId) > 0 {
 		msg.Chat = hex.EncodeToString(msg.GroupId)
+	} else {
+		if msg.Sender == self {
+			msg.Chat = msg.Receiver
+		}
+		msg.Chat = msg.Sender
 	}
-	if msg.Sender == self {
-		msg.Chat = msg.Receiver
-	}
-	msg.Chat = msg.Sender
 
 	return &msg
 }
