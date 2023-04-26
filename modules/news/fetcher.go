@@ -1,10 +1,12 @@
 package news
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -205,8 +207,15 @@ func (f *Fetcher) getBreakingReader() (io.ReadCloser, error) {
 // response body or something else)
 func (f *Fetcher) getBreakingFromReader(reader io.ReadCloser) (breakings, error) {
 	var respB breakingResp
+	buf := &bytes.Buffer{}
+	if _,err := io.Copy(buf, reader); err != nil {
+		return nil, err
+	}
 	var err error
-	if err := json.NewDecoder(reader).Decode(&respB); err != nil {
+	if err := json.Unmarshal(buf.Bytes(), &respB); err != nil {
+		// TODO only temporary for debugging
+		ferr, _ := os.CreateTemp("", time.Now().Format("2006-01-02_15-04-05_signalbotBreaking.json"))
+		ferr.Write(buf.Bytes())
 		return nil, err
 	}
 	resp := respB.BreakingNews
