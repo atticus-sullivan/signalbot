@@ -81,3 +81,20 @@ func TestFetcher(t *testing.T) {
 		t.Fatalf("Invalid name")
 	}
 }
+
+// func TestMain(t *testing.T) {
+// 	fserie, err := NewFernsehserien(slog.Default(), "./")
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	reader, err := fserie.fetcher.getReaders(map[string]string{"test": "https://www.fernsehserien.de/filme/die-drei-musketiere-d-artagnan"})
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	out, err := fserie.fetcher.getFromReaders(reader, map[string]bool{})
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	t.Logf("%d \"%v\"\n", len(out), out)
+// 	t.Fail()
+// }
