@@ -14,6 +14,7 @@ import (
 	"signalbot_go/modules/cmd"
 	"signalbot_go/modules/fernsehserien"
 	"signalbot_go/modules/freezer"
+	"signalbot_go/modules/hugendubel"
 	"signalbot_go/modules/influx"
 	"signalbot_go/modules/news"
 	"signalbot_go/modules/periodic"
@@ -137,6 +138,11 @@ func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalSe
 	if _, ok := cfg.Handlers["news"]; ok {
 		if s.modules["news"], err = news.NewNews(log.With("module", "news"), filepath.Join(cfgDir, "news")); err != nil {
 			return nil, fmt.Errorf("'news' module: %v", err)
+		}
+	}
+	if _, ok := cfg.Handlers["hugendubel"]; ok {
+		if s.modules["hugendubel"], err = hugendubel.NewHugendubel(log.With("module", "hugendubel"), filepath.Join(cfgDir, "hugendubel")); err != nil {
+			return nil, fmt.Errorf("'hugendubel' module: %v", err)
 		}
 	}
 
