@@ -70,10 +70,11 @@ func (r *Module) Handle(m *signaldbus.Message, signal signalsender.SignalSender,
 				r.SendError(m, signal, errMsg)
 				return err
 			} else {
+				// b contains the help text
 				errMsg := string(b)
-				r.Log.Info(fmt.Sprintf("Error: %v", err))
+				r.Log.Info(fmt.Sprintf("%v", arg.ErrHelp))
 				r.SendError(m, signal, errMsg)
-				return err
+				return arg.ErrHelp
 			}
 		default:
 			errMsg := fmt.Sprintf("Error: %v", err)
