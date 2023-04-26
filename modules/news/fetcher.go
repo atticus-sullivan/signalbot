@@ -191,7 +191,7 @@ func (f *Fetcher) getNewsFromReader(reader io.Reader) (entries, error) {
 
 // get the content from the internet
 func (f *Fetcher) getBreakingReader() (io.ReadCloser, error) {
-	response, err := http.Get("https://www.tagesschau.de/ipa/v1/web/headerapp/")
+	response, err := http.Get("https://www.tagesschau.de/json/headerapp")
 	if err != nil {
 		return nil, err
 	}
