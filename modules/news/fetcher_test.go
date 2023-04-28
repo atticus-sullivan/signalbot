@@ -157,12 +157,13 @@ func TestFetcherBreakingPos(t *testing.T) {
 	}
 	n := items[0]
 	n_ref := breaking{
-		Headline: "Finnland ist offiziell NATO-Mitglied",
-		Text:     "Finnland ist offiziell der NATO beigetreten. Der finnische Außenminister Haavisto überreichte die Beitrittsurkunde seines Landes an US-Außenminister Blinken und schloss damit den Aufnahmeprozess ab.\r\n",
-		Url:      "https://www.tagesschau.de/ausland/europa/finnland-nato-mitglied-101.html",
+		Headline: "Bürgermeisterwahl in Berlin: Wegner im 1. Wahlgang gescheitert",
+		Text:     "Der CDU-Politiker Kai Wegner ist bei der Wahl zum neuen Regierenden Bürgermeister von Berlin im ersten Wahlgang gescheitert. Der 50-Jährige verpasste bei der Abstimmung im Abgeordnetenhaus die erforderliche absolute Mehrheit.",
+		Url:      "/eilmeldung/eilmeldung-7196.html",
 		LinkText: "Eilmeldung",
-		Id:       "c9668947-9a8a-43c6-8fcd-228c36a068f6",
-		Date:     time.Date(2023, 4, 4, 15, 13, 0, 0, location),
+		Id:       "54ec4992-8048-4308-b5e4-4541e79dfc2f",
+		Date:     time.Date(2023, 4, 27, 12, 53, 0, 0, location),
+		DateS: "Stand: 27.04.2023 12:53 Uhr",
 	}
 	if n.Headline != n_ref.Headline {
 		t.Fatalf("Wrong Headline")
@@ -179,7 +180,10 @@ func TestFetcherBreakingPos(t *testing.T) {
 	if n.Id != n_ref.Id {
 		t.Fatalf("Wrong Id")
 	}
+	if n.DateS != n_ref.DateS {
+		t.Fatalf("Wrong dateS")
+	}
 	if !n.Date.Equal(n_ref.Date) {
-		t.Fatalf("Wrong date")
+		t.Fatalf("Wrong date. Is %v (should: %v)", n.Date, n_ref.Date)
 	}
 }

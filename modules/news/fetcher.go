@@ -90,7 +90,7 @@ type homepageResp struct {
 }
 
 type breakingResp struct {
-	BreakingNews breaking `yaml:"breakingNews"`
+	BreakingNews breakings `yaml:"breakingNews"`
 }
 
 type breaking struct {
@@ -134,10 +134,6 @@ func (e breaking) RemString() string {
 
 func (e breaking) Equals(o breaking) bool {
 	return e.Id == o.Id
-}
-
-func (e *breaking) IsZero() bool {
-	return e.Text == ""
 }
 
 // new type so that it can implement stringer
@@ -228,17 +224,15 @@ func (f *Fetcher) getBreakingFromReader(reader io.ReadCloser) (breakings, error)
 	// 	DateS:    "26.04.2021 - 18:02 Uhr",
 	// }
 
-	if resp.DateS != "" {
-		// date comes as "26.04.2021 - 18:02 Uhr"
-		resp.Date, err = time.ParseInLocation("02.01.2006 - 15:04 Uhr", resp.DateS, loc)
-		if err != nil {
-			return nil, err
+	for i,r := range resp {
+		if r.DateS != "" {
+			// date comes as "Stand: 27.04.2023 12:53 Uhr"
+			resp[i].Date, err = time.ParseInLocation("Stand: 02.01.2006 15:04 Uhr", r.DateS, loc)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
-	if resp.IsZero() {
-		return breakings{}, nil
-	} else {
-		return breakings{resp}, nil
-	}
+	return resp, nil
 }
