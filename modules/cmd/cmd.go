@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	cmdsplit "signalbot_go/internal/cmdSplit"
 	"signalbot_go/internal/signalsender"
 	"signalbot_go/modules"
 	"signalbot_go/signaldbus"
@@ -85,8 +86,21 @@ func (r *Cmd) Validate() error {
 
 // handle a signalmessage
 func (r *Cmd) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
-	if cmds, ok := r.Commands[m.Message]; ok {
-		command := exec.Command(cmds)
+	args, err := cmdsplit.Split(m.Message)
+	if err != nil {
+		errMsg := fmt.Sprintf("Error: %v", err)
+		r.Log.Error(errMsg)
+		r.SendError(m, signal, errMsg)
+		return
+	}
+	if len(args) < 1 {
+		errMsg := "Error: too few arguments povided"
+		r.Log.Error(errMsg)
+		r.SendError(m, signal, errMsg)
+		return
+	}
+	if cmds, ok := r.Commands[args[0]]; ok {
+		command := exec.Command(cmds, args[1:]...)
 		command.Dir = r.ConfigDir
 
 		out, err := command.StdoutPipe()
