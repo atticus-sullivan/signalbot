@@ -304,12 +304,16 @@ func (s *SignalServer) handle(m *signaldbus.Message) {
 	// split the message and handle the different commands
 
 	// split at "\n" as well as "|"
-	scanner := bufio.NewScanner(strings.NewReader(m.Message))
-	scanner.Split(splitLines)
-	for scanner.Scan() {
-		mLine := *m // copy construct like
-		mLine.Message = scanner.Text()
-		s.handleLine(&mLine)
+	if m.Message != "" {
+		scanner := bufio.NewScanner(strings.NewReader(m.Message))
+		scanner.Split(splitLines)
+		for scanner.Scan() {
+			mLine := *m // copy construct like
+			mLine.Message = scanner.Text()
+			s.handleLine(&mLine)
+		}
+	} else {
+		s.handleLine(m)
 	}
 }
 
