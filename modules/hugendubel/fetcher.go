@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/jellydator/ttlcache/v3"
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 var (

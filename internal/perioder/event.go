@@ -6,7 +6,7 @@ import (
 	"math"
 	"time"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 // implements ReocEvent. Primary reason for public members are to be able to

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/andybalholm/cascadia"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"golang.org/x/net/html"
 )
 

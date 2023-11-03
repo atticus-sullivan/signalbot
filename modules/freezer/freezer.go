@@ -12,7 +12,7 @@ import (
 	"github.com/alexflint/go-arg"
 	freezerDB_db "github.com/atticus-sullivan/freezerDB/db"
 	freezerDB_models "github.com/atticus-sullivan/freezerDB/db/models"
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 // freezer module. Should be instanciated with `NewFreezer`.

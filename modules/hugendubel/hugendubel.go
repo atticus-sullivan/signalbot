@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/alexflint/go-arg"
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"gopkg.in/yaml.v3"
 )
 

@@ -6,7 +6,7 @@ import (
 	"signalbot_go/signaldbus"
 	"strings"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 type Help struct {

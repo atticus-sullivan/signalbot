@@ -10,7 +10,7 @@ import (
 	"signalbot_go/signaldbus"
 
 	"github.com/alexflint/go-arg"
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 type Module struct {

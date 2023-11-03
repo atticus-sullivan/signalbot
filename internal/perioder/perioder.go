@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 // event which reoccurs (manages its own loop via `Run`. Can contain arbitrary

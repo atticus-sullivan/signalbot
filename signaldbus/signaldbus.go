@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/godbus/dbus/v5"
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 // enum for different busses to listen on

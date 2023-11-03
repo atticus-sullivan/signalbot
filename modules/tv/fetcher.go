@@ -8,7 +8,7 @@ import (
 
 	"github.com/andybalholm/cascadia"
 	"github.com/jellydator/ttlcache/v3"
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 // fetches stuff. Maybe some day this will have data members (e.g. if caching

@@ -24,7 +24,7 @@ import (
 	"signalbot_go/signaldbus"
 	"strings"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"gopkg.in/yaml.v3"
 )
 

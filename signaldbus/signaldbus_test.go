@@ -7,7 +7,7 @@ import (
 	"signalbot_go/signaldbus/mock"
 	"testing"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 var log *slog.Logger = slog.New(slog.HandlerOptions{AddSource: true, Level: slog.LevelError}.NewTextHandler(io.Discard))

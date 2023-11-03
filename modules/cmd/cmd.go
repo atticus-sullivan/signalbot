@@ -12,7 +12,7 @@ import (
 	"signalbot_go/modules"
 	"signalbot_go/signaldbus"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"gopkg.in/yaml.v3"
 )
 

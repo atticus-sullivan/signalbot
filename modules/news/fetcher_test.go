@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 func nopLog() *slog.Logger {

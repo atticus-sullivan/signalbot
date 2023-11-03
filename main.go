@@ -13,7 +13,7 @@ import (
 	"syscall"
 
 	"github.com/lmittmann/tint"
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
 // outsourced configuration of logging. Call this to get a configured root logger
@@ -31,11 +31,11 @@ func logInit() *slog.Logger {
 	// 	return a
 	// }
 	// logger := slog.New(slog.HandlerOptions{AddSource: true, ReplaceAttr: replace, Level: slog.LevelInfo}.NewTextHandler(os.Stderr))
-	logger := slog.New(tint.Options{
+	logger := slog.New(tint.NewHandler(os.Stderr, &tint.Options{
 		Level:      slog.LevelInfo,
 		TimeFormat: time.RFC3339,
 		NoColor:    false,
-	}.NewHandler(os.Stderr))
+	}))
 	return logger
 }
 

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/exp/slog"
+	"log/slog"
 	"golang.org/x/net/html"
 )
 
