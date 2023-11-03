@@ -45,9 +45,9 @@ func (p *Periodic) Validate() error {
 }
 
 type Args struct {
-	Add *addArgs `arg:"subcommand:add"`
-	Ls  *lsArgs  `arg:"subcommand:list"`
-	Rm  *rmArgs  `arg:"subcommand:remove"`
+	Add *addArgs `arg:"subcommand:add|a"`
+	Ls  *lsArgs  `arg:"subcommand:list|ls|l"`
+	Rm  *rmArgs  `arg:"subcommand:remove|rm|r"`
 }
 
 type addArgs struct {
