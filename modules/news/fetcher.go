@@ -209,11 +209,13 @@ func (f *Fetcher) getBreakingFromReader(reader io.ReadCloser) (breakings, error)
 	}
 	var err error
 	if err := json.Unmarshal(buf.Bytes(), &respB); err != nil {
-		// TODO only temporary for debugging
-		ferr, _ := os.CreateTemp("", time.Now().Format("2006-01-02_15-04-05_signalbotBreaking.json"))
-		ferr.Write(buf.Bytes())
 		return nil, err
 	}
+	// TODO only temporary for debugging
+	ferr, _ := os.CreateTemp("", time.Now().Format("2006-01-02_15-04-05_signalbotBreaking.json"))
+	defer ferr.Close()
+	ferr.Write(buf.Bytes())
+
 	resp := respB.BreakingNews
 
 	// resp = breakingResp{
