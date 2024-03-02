@@ -18,9 +18,10 @@ import (
 var (
 	ErrNetwork           error = errors.New("Error retreiving from network")
 	ErrInvalidResultCode error = errors.New("Error invalid result code")
+	ErrPostStatusCode    error = errors.New("Error when posting query, statuscode not OK")
 )
 
-// curl 'https://www.hugendubel.de/wsapi/rest/v1/authentication/anonymousloginjwt' \
+// curl 'https://www.hugendubel.de/rest/v1/authentication/anonymousloginjwt' \
 //   -H 'authority: www.hugendubel.de' \
 //   -H 'accept: */*' \
 //   -H 'accept-language: en-US,en;q=0.9,de;q=0.8' \
@@ -144,7 +145,7 @@ func (f *Fetcher) auth() (*jwtResponse, error) {
 		return &tmp, nil
 	}
 
-	req, err := http.NewRequest(http.MethodPost, "https://www.hugendubel.de/wsapi/rest/v1/authentication/anonymousloginjwt", bytes.NewBufferString("username=Hudu-Mobile-Shop-Vollsortiment"))
+	req, err := http.NewRequest(http.MethodPost, "https://www.hugendubel.de/rest/v1/authentication/anonymousloginjwt", bytes.NewBufferString("username=Hudu-Mobile-Shop-Vollsortiment"))
 	if err != nil {
 		return nil, err
 	}
@@ -218,6 +219,7 @@ func (f *Fetcher) getStep(q query, jwt *jwtResponse, size int, out chan<- book) 
 
 		buf := &bytes.Buffer{}
 		_, err = io.Copy(buf, r)
+		f.log.Debug("Query", "response", buf);
 		if err != nil {
 			f.log.Warn(err.Error())
 		}
@@ -264,10 +266,12 @@ func (f *Fetcher) getReader(q query, jwt *jwtResponse, offset int, size int) (io
 	j.Set("ascending", "false")
 	j.Set("sortField", "score")
 
-	req, err := http.NewRequest(http.MethodPost, "https://www.hugendubel.de/wsapi/rest/v1/articlesearch/advanced", bytes.NewBufferString(j.Encode()))
+	req, err := http.NewRequest(http.MethodPost, "https://www.hugendubel.de/rest/v1/articlesearch/advanced", bytes.NewBufferString(j.Encode()))
+	f.log.Debug("query ", "q", j.Encode())
 	if err != nil {
 		return nil, err
 	}
+	f.log.Debug("query ", "auth", jwt.Result.AccessToken)
 	req.Header.Set("Authorization", "Bearer "+jwt.Result.AccessToken)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
 	// req.Header.Set("Content-Type", "application/json; charset=UTF-8")
@@ -275,6 +279,9 @@ func (f *Fetcher) getReader(q query, jwt *jwtResponse, offset int, size int) (io
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, ErrPostStatusCode
 	}
 	return resp.Body, nil
 }
