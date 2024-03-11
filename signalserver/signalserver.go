@@ -319,6 +319,7 @@ func (s *SignalServer) handle(m *signaldbus.Message) {
 
 // handle the signalmessage as single command
 func (s *SignalServer) handleLine(m *signaldbus.Message) {
+	// TODO alias
 	prefix, remainingMsg, _ := strings.Cut(m.Message, " ")
 	module, set := s.prefix2module[prefix]
 	if !set {

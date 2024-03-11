@@ -7,12 +7,9 @@ func (s *Account) SendGeneric(message string, attachments []string, recipient st
 	if len(groupID) > 0 {
 		// send group message ignoring recipient
 		return s.SendGroupMessage(message, attachments, groupID)
-	} else if recipient == s.selfNr && !notify {
-		// send note to self
-		return s.SendNoteToSelfMessage(message, attachments)
 	} else {
 		// send normal personal message
-		return s.SendMessage(message, attachments, recipient)
+		return s.SendMessage(message, attachments, recipient, notify)
 	}
 }
 

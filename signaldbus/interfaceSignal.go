@@ -197,8 +197,8 @@ func (s *Account) SendEndSessionMessage(recipients []string) (err error) {
 // files), recipient is the number of the single-recipient. The returned
 // timestamp can be used to identify the corresponding signal reply.
 // Might raise `AttachmentInvalid`, `Failure`, `InvalidNumber`, `UntrustedIdentity` exceptions.`
-func (s *Account) SendMessage(message string, attachments []string, recipient string) (timestamp int64, err error) {
-	call := s.obj.Call("org.asamk.Signal.sendMessage", 0, message, attachments, recipient)
+func (s *Account) SendMessage(message string, attachments []string, recipient string, notifySelf bool) (timestamp int64, err error) {
+	call := s.obj.Call("org.asamk.Signal.sendMessage", 0, message, attachments, recipient, notifySelf)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
 		switch err.Name {
@@ -226,8 +226,8 @@ func (s *Account) SendMessage(message string, attachments []string, recipient st
 // files), recipients is the string array of the numbers of the recipients. The
 // returned timestamp can be used to identify the corresponding signal reply.
 // Might raise `AttachmentInvalid`, `Failure`, `InvalidNumber`, `UntrustedIdentity` exceptions.`
-func (s *Account) SendMessage_multi(message string, attachments []string, recipients []string) (timestamp int64, err error) {
-	call := s.obj.Call("org.asamk.Signal.sendMessage", 0, message, attachments, recipients)
+func (s *Account) SendMessage_multi(message string, attachments []string, recipients []string, notifySelf bool) (timestamp int64, err error) {
+	call := s.obj.Call("org.asamk.Signal.sendMessage", 0, message, attachments, recipients, notifySelf)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
 		switch err.Name {
