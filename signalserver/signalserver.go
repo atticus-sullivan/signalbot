@@ -15,7 +15,6 @@ import (
 	"signalbot_go/modules/fernsehserien"
 	"signalbot_go/modules/freezer"
 	"signalbot_go/modules/hugendubel"
-	"signalbot_go/modules/influx"
 	"signalbot_go/modules/news"
 	"signalbot_go/modules/periodic"
 	"signalbot_go/modules/refectory"
@@ -123,11 +122,6 @@ func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalSe
 	if _, ok := cfg.Handlers["freezer"]; ok {
 		if s.modules["freezer"], err = freezer.NewFreezer(log.With("module", "freezer"), filepath.Join(cfgDir, "freezer")); err != nil {
 			return nil, fmt.Errorf("'freezer' module: %v", err)
-		}
-	}
-	if _, ok := cfg.Handlers["influx"]; ok {
-		if s.modules["influx"], err = influx.NewInflux(log.With("module", "influx"), filepath.Join(cfgDir, "influx")); err != nil {
-			return nil, fmt.Errorf("'influx' module: %v", err)
 		}
 	}
 	if _, ok := cfg.Handlers["fernsehserien"]; ok {
