@@ -1,0 +1,13 @@
+[Unit]
+Description=signalbot_go
+After=signal-cli.service
+
+[Service]
+Type=simple
+User=pi
+Group=users
+ExecStart="/usr/local/bin/signalbot"
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
