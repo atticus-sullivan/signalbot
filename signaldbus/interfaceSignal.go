@@ -214,7 +214,7 @@ func (s *Account) SendEndSessionMessage(recipients []string) (err error) {
 // timestamp can be used to identify the corresponding signal reply.
 // Might raise `AttachmentInvalid`, `Failure`, `InvalidNumber`, `UntrustedIdentity` exceptions.`
 func (s *Account) SendMessage(message string, attachments []string, recipient string, notifySelf bool) (timestamp int64, err error) {
-	call := s.obj.Call("org.asamk.Signal.sendMessage", 0, message, attachments, recipient, notifySelf)
+	call := s.obj.Call("org.asamk.Signal.sendMessage", 0, message, attachments, recipient)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
 		switch err.Name {
@@ -243,7 +243,7 @@ func (s *Account) SendMessage(message string, attachments []string, recipient st
 // returned timestamp can be used to identify the corresponding signal reply.
 // Might raise `AttachmentInvalid`, `Failure`, `InvalidNumber`, `UntrustedIdentity` exceptions.`
 func (s *Account) SendMessage_multi(message string, attachments []string, recipients []string, notifySelf bool) (timestamp int64, err error) {
-	call := s.obj.Call("org.asamk.Signal.sendMessage", 0, message, attachments, recipients, notifySelf)
+	call := s.obj.Call("org.asamk.Signal.sendMessage", 0, message, attachments, recipients)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
 		switch err.Name {
