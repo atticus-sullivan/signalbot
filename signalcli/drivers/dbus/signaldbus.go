@@ -17,12 +17,9 @@ package signaldbus
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import (
-	"bufio"
 	"encoding/hex"
 	"fmt"
-	"io"
 	"log/slog"
-	"strings"
 
 	"signalbot_go/signalcli"
 
@@ -183,60 +180,4 @@ func NewMessage(v *dbus.Signal, self string) *signalcli.Message {
 	}
 
 	return &msg
-}
-
-func NewMessageFromReader(r io.Reader, self string) (*signalcli.Message, error) {
-	rb := bufio.NewReader(r)
-
-	gidB, err := rb.ReadBytes('\n')
-	if err != nil && err == io.EOF {
-		return nil, err
-	}
-	gidS := strings.TrimSpace(string(gidB))
-	gid, err := hex.DecodeString(gidS)
-	if err != nil && err == io.EOF {
-		return nil, err
-	}
-
-	sender, err := rb.ReadBytes('\n')
-	if err != nil && err == io.EOF {
-		return nil, err
-	}
-
-	receiver, err := rb.ReadBytes('\n')
-	if err != nil && err == io.EOF {
-		return nil, err
-	}
-
-	msg, err := rb.ReadBytes('\n')
-	if err != nil && err == io.EOF {
-		return nil, err
-	}
-
-	m := signalcli.Message{}
-
-	m.Message = strings.TrimSpace(string(msg))
-
-	if len(gidS) != 0 {
-		m.GroupId = gid
-	}
-
-	if len(sender) != 0 {
-		m.Sender = strings.TrimSpace(string(sender))
-	}
-
-	if len(receiver) != 0 {
-		m.Receiver = strings.TrimSpace(string(receiver))
-	}
-
-	// fill chat
-	if len(m.GroupId) > 0 {
-		m.Chat = hex.EncodeToString(m.GroupId)
-	}
-	if m.Sender == self {
-		m.Chat = m.Receiver
-	}
-	m.Chat = m.Sender
-
-	return &m, nil
 }

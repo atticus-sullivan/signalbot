@@ -140,7 +140,6 @@ func (s *Account) ListenForSignalsWithSync(sync chan<- struct{}) {
 	sync <- struct{}{}
 	running := true
 	for running {
-		s.log.Info("signal-cli: still running")
 		select {
 		case <-s.stop:
 			running = false

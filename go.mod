@@ -22,6 +22,9 @@ require (
 	github.com/jmoiron/sqlx v1.3.5 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
+	golang.org/x/exp/event v0.0.0-20220217172124-1812c5b45e43 // indirect
+	golang.org/x/exp/jsonrpc2 v0.0.0-20240506185415-9bf2ced13842 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/tools v0.21.0 // indirect
+	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 )

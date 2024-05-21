@@ -38,6 +38,7 @@ import (
 	"signalbot_go/modules/weather"
 	"signalbot_go/signalcli"
 	signaldbus "signalbot_go/signalcli/drivers/dbus"
+	signaljsonrpc "signalbot_go/signalcli/drivers/jsonrpc"
 	"strings"
 
 	"log/slog"
@@ -60,7 +61,11 @@ type SignalServer struct {
 // creates a new signalServer
 func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalServer, error) {
 	var err error
-	cfg := SignalServerCfg{Dbus: signaldbus.SystemBus}
+	// set default
+	cfg := SignalServerCfg{
+		Dbus: signaldbus.SystemBus,
+		UsedDriver: DriverDbus,
+	}
 
 	f, err := os.Open(filepath.Join(cfgDir, "main.yaml"))
 	if err != nil {
@@ -74,15 +79,28 @@ func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalSe
 		return nil, err
 	}
 
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+
 	s := SignalServer{
 		log:             log,
 		modules:         make(map[string]Handler),
 		SignalServerCfg: cfg,
 	}
 
-	driver, err := signaldbus.NewSignalDbusDriver(log.With(), s.Dbus)
-	if err != nil {
-		return nil, err
+	var driver signalcli.Driver
+	switch cfg.UsedDriver {
+	case DriverDbus:
+		driver, err = signaldbus.NewSignalDbusDriver(log.With(), s.Dbus)
+		if err != nil {
+			return nil, err
+		}
+	case DriverJsonRpc:
+		driver, err = signaljsonrpc.NewSignalJsonRpcDriver(log.With(), cfg.UnixSocket, cfg.SelfNr)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	s.acc, err = signalcli.NewAccount(log.With(), driver)

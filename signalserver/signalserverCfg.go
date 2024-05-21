@@ -21,13 +21,22 @@ import (
 	signaldbus "signalbot_go/signalcli/drivers/dbus"
 )
 
+type UsedDriver string
+var (
+	DriverDbus UsedDriver = "dbus"
+	DriverJsonRpc UsedDriver = "jsonrpc"
+)
+
 // configuration of a signalServer. Can be parsed by yaml
 // TODO note on concurrency
 type SignalServerCfg struct {
 	Dbus           signaldbus.DbusType   `yaml:"dbus"`
+	UnixSocket     string `yaml:"unixSocket"`
+	UsedDriver UsedDriver `yaml:"driver"`
 	PortSendMsg    uint16                `yaml:"portSendMsg"`
 	PortVirtRcvMsg uint16                `yaml:"portVirtRcvMsg"`
 	Handlers       map[string]HandlerCfg `yaml:"handlers"` // maps name to prefix
+	SelfNr string `yaml:"selfNr"`
 
 	// just to have a place where to define anchors to alias to laster
 	Chats []string `yaml:"chats"`
@@ -36,8 +45,20 @@ type SignalServerCfg struct {
 
 // check if stored values are valid
 func (c *SignalServerCfg) Validate() error {
-	if c.Dbus != signaldbus.SystemBus && c.Dbus != signaldbus.SessionBus {
-		return fmt.Errorf("Invalid dbus type")
+	if c.UsedDriver != DriverDbus && c.UsedDriver != DriverJsonRpc {
+		return fmt.Errorf("Invalid driver set")
+	}
+	if c.UsedDriver == DriverDbus {
+		if c.Dbus != signaldbus.SystemBus && c.Dbus != signaldbus.SessionBus {
+			return fmt.Errorf("Invalid dbus type")
+		}
+	} else if c.UsedDriver == DriverJsonRpc {
+		if c.UnixSocket == "" {
+			return fmt.Errorf("Unix socket must be set")
+		}
+		if c.SelfNr == "" {
+			return fmt.Errorf("selfNr must be set when using jsonRpc driver")
+		}
 	}
 	for _, h := range c.Handlers {
 		if err := h.Validate(); err != nil {
