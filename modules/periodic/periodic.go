@@ -25,7 +25,7 @@ import (
 	"signalbot_go/internal/perioder"
 	"signalbot_go/internal/signalsender"
 	"signalbot_go/modules"
-	"signalbot_go/signaldbus"
+	"signalbot_go/signalcli"
 	"time"
 
 	"github.com/alexflint/go-arg"
@@ -35,14 +35,14 @@ import (
 
 type Periodic struct {
 	modules.Module
-	perioder perioder.Perioder[signaldbus.Message] `yaml:"-"`
+	perioder perioder.Perioder[signalcli.Message] `yaml:"-"`
 	stop     context.CancelFunc                    `yaml:"-"`
 }
 
 func NewPeriodic(log *slog.Logger, cfgDir string) (*Periodic, error) {
 	r := Periodic{
 		Module:   modules.NewModule(log, cfgDir),
-		perioder: perioder.NewPerioderImpl[signaldbus.Message](log.With()),
+		perioder: perioder.NewPerioderImpl[signalcli.Message](log.With()),
 	}
 
 	// validation
@@ -80,7 +80,7 @@ type rmArgs struct {
 }
 
 // handle a signalmessage
-func (r *Periodic) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
+func (r *Periodic) Handle(m *signalcli.Message, signal signalsender.SignalSender, virtRcv func(*signalcli.Message)) {
 	var args Args
 	parser, err := arg.NewParser(arg.Config{}, &args)
 	if err != nil {
@@ -110,7 +110,7 @@ func (r *Periodic) Handle(m *signaldbus.Message, signal signalsender.SignalSende
 	}
 }
 
-func (r *Periodic) Add(add *addArgs, m signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
+func (r *Periodic) Add(add *addArgs, m signalcli.Message, signal signalsender.SignalSender, virtRcv func(*signalcli.Message)) {
 	if add.Every == time.Duration(0) {
 		errMsg := fmt.Sprintf("Invalid duration: %v", add.Every)
 		r.Log.Info(errMsg)
@@ -128,14 +128,14 @@ func (r *Periodic) Add(add *addArgs, m signaldbus.Message, signal signalsender.S
 	if add.Desc == "" {
 		add.Desc = m.Message
 	}
-	var event perioder.ReocEvent[signaldbus.Message]
+	var event perioder.ReocEvent[signalcli.Message]
 	if add.Until.IsZero() {
-		event = perioder.NewReocEventImpl(add.Start, add.Every, add.Desc, m, func(time time.Time, event perioder.ReocEvent[signaldbus.Message]) {
+		event = perioder.NewReocEventImpl(add.Start, add.Every, add.Desc, m, func(time time.Time, event perioder.ReocEvent[signalcli.Message]) {
 			meta := event.Metadata()
 			virtRcv(&meta)
 		})
 	} else {
-		event = perioder.NewReocEventImplDeadline(add.Start, add.Every, add.Until, add.Desc, m, func(time time.Time, event perioder.ReocEvent[signaldbus.Message]) {
+		event = perioder.NewReocEventImplDeadline(add.Start, add.Every, add.Until, add.Desc, m, func(time time.Time, event perioder.ReocEvent[signalcli.Message]) {
 			meta := event.Metadata()
 			virtRcv(&meta)
 		})
@@ -146,9 +146,9 @@ func (r *Periodic) Add(add *addArgs, m signaldbus.Message, signal signalsender.S
 	}
 }
 
-func (r *Periodic) Ls(ls *lsArgs, m signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
+func (r *Periodic) Ls(ls *lsArgs, m signalcli.Message, signal signalsender.SignalSender, virtRcv func(*signalcli.Message)) {
 	eventsAll := r.perioder.Events()
-	events := make(map[uint]perioder.ReocEvent[signaldbus.Message])
+	events := make(map[uint]perioder.ReocEvent[signalcli.Message])
 	for k, v := range eventsAll {
 		if v.Metadata().Sender == m.Sender {
 			events[k] = v
@@ -159,7 +159,7 @@ func (r *Periodic) Ls(ls *lsArgs, m signaldbus.Message, signal signalsender.Sign
 	}
 }
 
-func (r *Periodic) Rm(rm *rmArgs, m signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
+func (r *Periodic) Rm(rm *rmArgs, m signalcli.Message, signal signalsender.SignalSender, virtRcv func(*signalcli.Message)) {
 	event, ok := r.perioder.Events()[rm.Id]
 	if !ok || event.Metadata().Sender != m.Sender {
 		errMsg := fmt.Sprintf("Error: Event with ID %d does not exist or you don't added this event", rm.Id)
@@ -174,7 +174,7 @@ func (r *Periodic) Rm(rm *rmArgs, m signaldbus.Message, signal signalsender.Sign
 	}
 }
 
-func (r *Periodic) Start(virtRcv func(*signaldbus.Message)) error {
+func (r *Periodic) Start(virtRcv func(*signalcli.Message)) error {
 	if err := r.Module.Start(virtRcv); err != nil {
 		return err
 	}
@@ -191,7 +191,7 @@ func (r *Periodic) Start(virtRcv func(*signaldbus.Message)) error {
 			return err
 		}
 		d := yaml.NewDecoder(f)
-		events := make(map[uint]perioder.ReocEventImplDeadline[signaldbus.Message])
+		events := make(map[uint]perioder.ReocEventImplDeadline[signalcli.Message])
 		err = d.Decode(&events)
 		if err != nil {
 			// p.Log.Error(fmt.Sprintf("Error decoding to 'events.yaml': %v", err))
@@ -200,7 +200,7 @@ func (r *Periodic) Start(virtRcv func(*signaldbus.Message)) error {
 		// add events
 		for _, vIter := range events {
 			v := vIter // force copy
-			v.Foo = func(time time.Time, event perioder.ReocEvent[signaldbus.Message]) {
+			v.Foo = func(time time.Time, event perioder.ReocEvent[signalcli.Message]) {
 				meta := event.Metadata()
 				virtRcv(&meta)
 			}
@@ -214,7 +214,7 @@ func (r *Periodic) Start(virtRcv func(*signaldbus.Message)) error {
 	return nil
 }
 
-func (r *Periodic) Close(virtRcv func(*signaldbus.Message)) {
+func (r *Periodic) Close(virtRcv func(*signalcli.Message)) {
 	r.Module.Close(virtRcv)
 
 	r.Log.Info("closing periodic stuff")

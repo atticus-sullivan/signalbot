@@ -18,7 +18,7 @@ package signalserver
 
 import (
 	"fmt"
-	"signalbot_go/signaldbus"
+	signaldbus "signalbot_go/signalcli/drivers/dbus"
 )
 
 // configuration of a signalServer. Can be parsed by yaml

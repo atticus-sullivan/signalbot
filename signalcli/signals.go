@@ -1,4 +1,4 @@
-package signaldbus
+package signalcli
 
 // signalbot
 // Copyright (C) 2024  Lukas Heindl
@@ -22,8 +22,6 @@ import (
 	"fmt"
 	"io"
 	"strings"
-
-	"github.com/godbus/dbus/v5"
 )
 
 // ///////////
@@ -38,6 +36,7 @@ type MessageHandlerFunc func(*Message)
 func (f MessageHandlerFunc) handle(m *Message) {
 	f(m)
 }
+
 func (s *Account) AddMessageHandler(handler MessageHandler) {
 	s.messageHandlersChann <- &handler
 }
@@ -48,6 +47,7 @@ func (s *Account) AddMessageHandlerFunc(handler func(*Message)) error {
 	s.AddMessageHandler(MessageHandlerFunc(handler))
 	return nil
 }
+
 
 type SyncMessageHandler interface {
 	handle(*SyncMessage)
@@ -68,24 +68,6 @@ func (s *Account) AddSyncMessageHandlerFunc(handler func(*SyncMessage)) error {
 	return nil
 }
 
-type ReceiptHandler interface {
-	handle(*Receipt)
-}
-type ReceiptHandlerFunc func(*Receipt)
-
-func (f ReceiptHandlerFunc) handle(m *Receipt) {
-	f(m)
-}
-func (s *Account) AddReceiptHandler(handler ReceiptHandler) {
-	s.receiptHandlersChann <- &handler
-}
-func (s *Account) AddReceiptHandlerFunc(handler func(*Receipt)) error {
-	if handler == nil {
-		return fmt.Errorf("signal-cli: trying to acc a nil receipt handler func")
-	}
-	s.AddReceiptHandler(ReceiptHandlerFunc(handler))
-	return nil
-}
 
 // The sync message is received when the user sends a message from a linked
 // device.
@@ -158,63 +140,6 @@ func (m *Message) String() string {
 	builder.WriteString(fmt.Sprintf("%v", m.Attachments))
 	builder.WriteRune('}')
 	return builder.String()
-}
-
-func NewSyncMessage(v *dbus.Signal, self string) *SyncMessage {
-	msg := SyncMessage{
-		Message: Message{
-			Timestamp:   v.Body[0].(int64),
-			Sender:      v.Body[1].(string),
-			GroupId:     v.Body[3].([]byte),
-			Message:     v.Body[4].(string),
-			Attachments: v.Body[5].([]string),
-		},
-		Destination: v.Body[2].(string),
-	}
-	msg.Message.Receiver = msg.Destination
-
-	// fill chat
-	if len(msg.GroupId) > 0 {
-		msg.Chat = hex.EncodeToString(msg.GroupId)
-	} else {
-		if msg.Sender == self {
-			msg.Chat = msg.Receiver
-		}
-		msg.Chat = msg.Sender
-	}
-
-	return &msg
-}
-
-func NewReceipt(v *dbus.Signal, self string) *Receipt {
-	msg := Receipt{
-		Timestamp: v.Body[0].(int64),
-		Sender:    v.Body[1].(string),
-	}
-	return &msg
-}
-
-func NewMessage(v *dbus.Signal, self string) *Message {
-	msg := Message{
-		Timestamp:   v.Body[0].(int64),
-		Sender:      v.Body[1].(string),
-		GroupId:     v.Body[2].([]byte),
-		Message:     v.Body[3].(string),
-		Attachments: v.Body[4].([]string),
-	}
-	msg.Receiver = self
-
-	// fill chat
-	if len(msg.GroupId) > 0 {
-		msg.Chat = hex.EncodeToString(msg.GroupId)
-	} else {
-		if msg.Sender == self {
-			msg.Chat = msg.Receiver
-		}
-		msg.Chat = msg.Sender
-	}
-
-	return &msg
 }
 
 func NewMessageFromReader(r io.Reader, self string) (*Message, error) {

@@ -27,7 +27,7 @@ import (
 //////////////////////
 
 // Get the name correspnding to a number.
-func (s *Account) GetContactName(number string) (name string, err error) {
+func (s *SignalCliDriver) GetContactName(number string) (name string, err error) {
 	call := s.obj.Call("org.asamk.Signal.getContactName", 0, number)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -45,7 +45,7 @@ func (s *Account) GetContactName(number string) (name string, err error) {
 // Searches contacts and known profiles for a given name and returns the list
 // of all known numbers. May result in e.g. two entries if a contact and
 // profile name is set.
-func (s *Account) GetContactNumber(name string) (numbers []string, err error) {
+func (s *SignalCliDriver) GetContactNumber(name string) (numbers []string, err error) {
 	call := s.obj.Call("org.asamk.Signal.getContactNumber", 0, name)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -61,7 +61,7 @@ func (s *Account) GetContactNumber(name string) (numbers []string, err error) {
 }
 
 // For unknown numbers false is returned but no exception is raised.
-func (s *Account) GetSelfNumber() (number string, err error) {
+func (s *SignalCliDriver) GetSelfNumber() (number string, err error) {
 	call := s.obj.Call("org.asamk.Signal.getSelfNumber", 0)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -78,7 +78,7 @@ func (s *Account) GetSelfNumber() (number string, err error) {
 
 // For unknown numbers false is returned but no exception is raised.
 // Might rise `InvalidPhoneNumber` exception
-func (s *Account) IsContactBlocked(number string) (blocked bool, err error) {
+func (s *SignalCliDriver) IsContactBlocked(number string) (blocked bool, err error) {
 	call := s.obj.Call("org.asamk.Signal.isContactBlocked", 0, number)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -98,7 +98,7 @@ func (s *Account) IsContactBlocked(number string) (blocked bool, err error) {
 // Check if we are registered, false is returned, but no exception is raised.
 // If no number is given, returns true (indicating that you are registered).
 // Might rise `InvalidPhoneNumber` exception
-func (s *Account) IsRegistered() (result bool, err error) {
+func (s *SignalCliDriver) IsRegistered() (result bool, err error) {
 	call := s.obj.Call("org.asamk.Signal.isRegistered", 0)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -118,7 +118,7 @@ func (s *Account) IsRegistered() (result bool, err error) {
 // For unknown number, false is returned, but no exception is raised. If no
 // number is given, returns true (indicating that you are registered).
 // Might rise `InvalidPhoneNumber` exception
-func (s *Account) IsRegistered_num(number string) (result bool, err error) {
+func (s *SignalCliDriver) IsRegistered_num(number string) (result bool, err error) {
 	call := s.obj.Call("org.asamk.Signal.isRegistered", 0, number)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -138,7 +138,7 @@ func (s *Account) IsRegistered_num(number string) (result bool, err error) {
 // For unknown numbers, false is returned, but no exception is raised. If no
 // number is given, returns true (indicating that you are registered).
 // Might rise `InvalidPhoneNumber` exception
-func (s *Account) IsRegistered_nums(numbers []string) (results []bool, err error) {
+func (s *SignalCliDriver) IsRegistered_nums(numbers []string) (results []bool, err error) {
 	call := s.obj.Call("org.asamk.Signal.isRegistered", 0, numbers)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -157,7 +157,7 @@ func (s *Account) IsRegistered_nums(numbers []string) (results []bool, err error
 
 // This is a concatenated list of all defined contacts as well of profiles
 // known (e.g. peer group members or sender of received messages)
-func (s *Account) ListNumbers() (numbers []string, err error) {
+func (s *SignalCliDriver) ListNumbers() (numbers []string, err error) {
 	call := s.obj.Call("org.asamk.Signal.listNumbers", 0)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -174,7 +174,7 @@ func (s *Account) ListNumbers() (numbers []string, err error) {
 
 // Removes registration PIN protection.
 // Might raise `Failure` exception
-func (s *Account) RemovePin() (err error) {
+func (s *SignalCliDriver) RemovePin() (err error) {
 	call := s.obj.Call("org.asamk.Signal.removePin", 0)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -189,7 +189,7 @@ func (s *Account) RemovePin() (err error) {
 }
 
 // Might raise `Failure`, `InvalidNumber`, `UntrustedIdentity` exceptions
-func (s *Account) SendEndSessionMessage(recipients []string) (err error) {
+func (s *SignalCliDriver) SendEndSessionMessage(recipients []string) (err error) {
 	call := s.obj.Call("org.asamk.Signal.sendEndSessionMessage", 0, recipients)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -213,7 +213,7 @@ func (s *Account) SendEndSessionMessage(recipients []string) (err error) {
 // files), recipient is the number of the single-recipient. The returned
 // timestamp can be used to identify the corresponding signal reply.
 // Might raise `AttachmentInvalid`, `Failure`, `InvalidNumber`, `UntrustedIdentity` exceptions.`
-func (s *Account) SendMessage(message string, attachments []string, recipient string, notifySelf bool) (timestamp int64, err error) {
+func (s *SignalCliDriver) SendMessage(message string, attachments []string, recipient string, notifySelf bool) (timestamp int64, err error) {
 	call := s.obj.Call("org.asamk.Signal.sendMessage", 0, message, attachments, recipient)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -242,7 +242,7 @@ func (s *Account) SendMessage(message string, attachments []string, recipient st
 // files), recipients is the string array of the numbers of the recipients. The
 // returned timestamp can be used to identify the corresponding signal reply.
 // Might raise `AttachmentInvalid`, `Failure`, `InvalidNumber`, `UntrustedIdentity` exceptions.`
-func (s *Account) SendMessage_multi(message string, attachments []string, recipients []string, notifySelf bool) (timestamp int64, err error) {
+func (s *SignalCliDriver) SendMessage_multi(message string, attachments []string, recipients []string, notifySelf bool) (timestamp int64, err error) {
 	call := s.obj.Call("org.asamk.Signal.sendMessage", 0, message, attachments, recipients)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -273,7 +273,7 @@ func (s *Account) SendMessage_multi(message string, attachments []string, recipi
 // the recipient to send the reaction to. The returned timestamp can be used to
 // identify the correspnding signal reply.
 // Might raise `Failure`, `InvalidNumber` exceptions.`
-func (s *Account) SendMessageReaction(emoji string, remove bool, targetAuthor string, targetSentTimestamp int64, recipient string) (timestamp int64, err error) {
+func (s *SignalCliDriver) SendMessageReaction(emoji string, remove bool, targetAuthor string, targetSentTimestamp int64, recipient string) (timestamp int64, err error) {
 	call := s.obj.Call("org.asamk.Signal.sendMessageReaction", 0, emoji, remove, targetAuthor, targetSentTimestamp, recipient)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -300,7 +300,7 @@ func (s *Account) SendMessageReaction(emoji string, remove bool, targetAuthor st
 // of phoneNumbers of the recipients to send the reaction to. The returned
 // timestamp can be used to identify the correspnding signal reply.
 // Might raise `Failure`, `InvalidNumber` exceptions.`
-func (s *Account) SendMessageReaction_multi(emoji string, remove bool, targetAuthor string, targetSentTimestamp int64, recipients []string) (timestamp int64, err error) {
+func (s *SignalCliDriver) SendMessageReaction_multi(emoji string, remove bool, targetAuthor string, targetSentTimestamp int64, recipients []string) (timestamp int64, err error) {
 	call := s.obj.Call("org.asamk.Signal.sendMessageReaction", 0, emoji, remove, targetAuthor, targetSentTimestamp, recipients)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -315,7 +315,7 @@ func (s *Account) SendMessageReaction_multi(emoji string, remove bool, targetAut
 	return timestamp, nil
 }
 
-// func (s *Account) SendPaymentNotification(receipt []byte, note string, recipient string) (timestamp int64, err error) {
+// func (s *SignalCliDriver) SendPaymentNotification(receipt []byte, note string, recipient string) (timestamp int64, err error) {
 // 	sendPaymentNotification
 // }
 
@@ -325,7 +325,7 @@ func (s *Account) SendMessageReaction_multi(emoji string, remove bool, targetAut
 // files), The returned timestamp can be used to identify the corresponding
 // signal reply.
 // Might raise `AttachmentInvalid`, `Failure` exceptions.`
-func (s *Account) SendNoteToSelfMessage(message string, attachments []string) (timestamp int64, err error) {
+func (s *SignalCliDriver) SendNoteToSelfMessage(message string, attachments []string) (timestamp int64, err error) {
 	call := s.obj.Call("org.asamk.Signal.sendNoteToSelfMessage", 0, message, attachments)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -350,7 +350,7 @@ func (s *Account) SendNoteToSelfMessage(message string, attachments []string) (t
 // targetSentTimestamps is the array to identify the corresponding
 // signal-messages.
 // Might raise `Failure`, `UntrustedIdentity` exceptions.
-func (s *Account) SendReadReceipt(recipient string, targetSentTimestamps []int64) (err error) {
+func (s *SignalCliDriver) SendReadReceipt(recipient string, targetSentTimestamps []int64) (err error) {
 	call := s.obj.Call("org.asamk.Signal.sendReadReceipt", 0, recipient, targetSentTimestamps)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -372,7 +372,7 @@ func (s *Account) SendReadReceipt(recipient string, targetSentTimestamps []int64
 // targetSentTimestamps is the array to identify the corresponding
 // signal-messages.
 // Might raise `Failure`, `UntrustedIdentity` exceptions.
-func (s *Account) SendViewedReceipt(recipient string, targetSentTimestamps []int64) (err error) {
+func (s *SignalCliDriver) SendViewedReceipt(recipient string, targetSentTimestamps []int64) (err error) {
 	call := s.obj.Call("org.asamk.Signal.sendViewedReceipt", 0, recipient, targetSentTimestamps)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -393,7 +393,7 @@ func (s *Account) SendViewedReceipt(recipient string, targetSentTimestamps []int
 // phoneNumber of the chat where to remove from. The returned timestamp can be
 // used to identify the corresponding signal reply.
 // Might raise `Failure`, `InvalidNumber` exceptions`
-func (s *Account) SendRemoteDeleteMessage(targetSentTimestamp int64, recipient string) (timestamp int64, err error) {
+func (s *SignalCliDriver) SendRemoteDeleteMessage(targetSentTimestamp int64, recipient string) (timestamp int64, err error) {
 	call := s.obj.Call("org.asamk.Signal.sendRemoteDeleteMessage", 0, targetSentTimestamp, recipient)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -417,7 +417,7 @@ func (s *Account) SendRemoteDeleteMessage(targetSentTimestamp int64, recipient s
 // array of phoneNumbers of the chats where to remove from. The returned
 // timestamp can be used to identify the corresponding signal reply.
 // Might raise `Failure`, `InvalidNumber` exceptions`
-func (s *Account) SendRemoteDeleteMessage_multi(targetSentTimestamp int64, recipients []string) (timestamp int64, err error) {
+func (s *SignalCliDriver) SendRemoteDeleteMessage_multi(targetSentTimestamp int64, recipients []string) (timestamp int64, err error) {
 	call := s.obj.Call("org.asamk.Signal.sendRemoteDeleteMessage", 0, targetSentTimestamp, recipients)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -440,7 +440,7 @@ func (s *Account) SendRemoteDeleteMessage_multi(targetSentTimestamp int64, recip
 // recipient is the phoneNumber to send the indicator to, if stop is true the
 // typing indicator is removed.
 // Might raise `Failure`, `UntrustedIdentity` exceptions.`
-func (s *Account) SendTyping(recipient string, stop bool) (err error) {
+func (s *SignalCliDriver) SendTyping(recipient string, stop bool) (err error) {
 	call := s.obj.Call("org.asamk.Signal.sendTyping", 0, recipient, stop)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -461,7 +461,7 @@ func (s *Account) SendTyping(recipient string, stop bool) (err error) {
 // being unblocked. Messages from blocked numbers won't appear on the DBus
 // anymore.
 // Might raise `InvalidNumber` exception
-func (s *Account) SetContactBlocked(number string, block bool) (err error) {
+func (s *SignalCliDriver) SetContactBlocked(number string, block bool) (err error) {
 	call := s.obj.Call("org.asamk.Signal.setContactBlocked", 0, number, block)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -479,7 +479,7 @@ func (s *Account) SetContactBlocked(number string, block bool) (err error) {
 // number is the phoneNumber to work on, name is the Name to set in contacts
 // (in local storage with signal-cli).
 // Might raise `InvalidNumber`, `Failure` exceptions.
-func (s *Account) SetContactName(number string, name string) (err error) {
+func (s *SignalCliDriver) SetContactName(number string, name string) (err error) {
 	call := s.obj.Call("org.asamk.Signal.setContactName", 0, number, name)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -498,7 +498,7 @@ func (s *Account) SetContactName(number string, name string) (err error) {
 // Delete a contact.
 // number is the phoneNumber to delete.
 // Might raise `Failure` exception.
-func (s *Account) DeleteContact(number string) (err error) {
+func (s *SignalCliDriver) DeleteContact(number string) (err error) {
 	call := s.obj.Call("org.asamk.Signal.deleteContact", 0, number)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -515,7 +515,7 @@ func (s *Account) DeleteContact(number string) (err error) {
 // Delete a recipient.
 // number is the phoneNumber.
 // Might raise `Failure` exception.
-func (s *Account) DeleteRecipient(number string) (err error) {
+func (s *SignalCliDriver) DeleteRecipient(number string) (err error) {
 	call := s.obj.Call("org.asamk.Signal.deleteRecipient", 0, number)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -533,7 +533,7 @@ func (s *Account) DeleteRecipient(number string) (err error) {
 // number is the phoneNumber of the chat, expiration is the number of seconds
 // before messages disappear (set to 0 to disable).
 // Might raise `Failure`, `InvalidNumber` exceptions.
-func (s *Account) SetExpirationTimer(number string, expiration int32) (err error) {
+func (s *SignalCliDriver) SetExpirationTimer(number string, expiration int32) (err error) {
 	call := s.obj.Call("org.asamk.Signal.setExpirationTimer", 0, number, expiration)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -553,7 +553,7 @@ func (s *Account) SetExpirationTimer(number string, expiration int32) (err error
 // number.
 // pin is the pin to set (resets after 7 days of inactivity).
 // Might raise `Failure` exception.
-func (s *Account) SetPin(pin string) (err error) {
+func (s *SignalCliDriver) SetPin(pin string) (err error) {
 	// TODO arg pin: can only contain numbers?
 	call := s.obj.Call("org.asamk.Signal.setPin", 0, pin)
 	if call.Err != nil {
@@ -572,7 +572,7 @@ func (s *Account) SetPin(pin string) (err error) {
 // captcha is the token from the solved captcha on the signal website (can be
 // used to lift some rate-limits by solving a captcha).
 // Might raise `IOErrorException` exception
-func (s *Account) SubmitRateLimitChallenge(challenge string, captcha string) (err error) {
+func (s *SignalCliDriver) SubmitRateLimitChallenge(challenge string, captcha string) (err error) {
 	call := s.obj.Call("org.asamk.Signal.submitRateLimitChallenge", 0, challenge, captcha)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -592,7 +592,7 @@ func (s *Account) SubmitRateLimitChallenge(challenge string, captcha string) (er
 // the avatar-picture is removed. Strings set to "" result in this property
 // being unchanged.
 // Might raise: `Failure` exception.
-func (s *Account) UpdateProfile(name string, about string, aboutEmoji string, avatar string, remove bool) (err error) {
+func (s *SignalCliDriver) UpdateProfile(name string, about string, aboutEmoji string, avatar string, remove bool) (err error) {
 	call := s.obj.Call("org.asamk.Signal.updateProfile", 0, name, about, aboutEmoji, avatar, remove)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -612,7 +612,7 @@ func (s *Account) UpdateProfile(name string, about string, aboutEmoji string, av
 // to an avatar-picture, if remove is true the avatar-picture is removed.
 // Strings set to "" result in this property being unchanged.
 // Might raise: `Failure` exception.
-func (s *Account) UpdateProfile_firstLastName(givenName string, familyName string, about string, aboutEmoji string, avatar string, remove bool) (err error) {
+func (s *SignalCliDriver) UpdateProfile_firstLastName(givenName string, familyName string, about string, aboutEmoji string, avatar string, remove bool) (err error) {
 	call := s.obj.Call("org.asamk.Signal.updateProfile", 0, givenName, familyName, about, aboutEmoji, avatar, remove)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -631,7 +631,7 @@ func (s *Account) UpdateProfile_firstLastName(givenName string, familyName strin
 // directory. The returned url is the stickerpack-url after the successful
 // upload.
 // Might raise `Failure` exception.
-func (s *Account) UploadStickerPack(stickerPackPath string) (url string, err error) {
+func (s *SignalCliDriver) UploadStickerPack(stickerPackPath string) (url string, err error) {
 	call := s.obj.Call("org.asamk.Signal.uploadStickerPack", 0, stickerPackPath)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -650,7 +650,7 @@ func (s *Account) UploadStickerPack(stickerPackPath string) (url string, err err
 
 // Get the version of signal-cli
 // The returned version is the version-string if signal-cli.
-func (s *Account) Version() (version string, err error) {
+func (s *SignalCliDriver) Version() (version string, err error) {
 	call := s.obj.Call("org.asamk.Signal.version", 0)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed

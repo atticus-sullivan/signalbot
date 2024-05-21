@@ -23,7 +23,7 @@ import (
 	"signalbot_go/internal/dotterFile"
 	"signalbot_go/internal/signalsender"
 	"signalbot_go/modules"
-	"signalbot_go/signaldbus"
+	"signalbot_go/signalcli"
 
 	"github.com/alexflint/go-arg"
 	freezerDB_db "github.com/atticus-sullivan/freezerDB/db"
@@ -73,9 +73,9 @@ type Args struct {
 	ReportName *struct{} `arg:"subcommand:reportName"`
 }
 
-// Handle a message from the signaldbus. Parses the message, executes the query
+// Handle a message from the signalcli. Parses the message, executes the query
 // and responds to signal.
-func (r *Freezer) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
+func (r *Freezer) Handle(m *signalcli.Message, signal signalsender.SignalSender, virtRcv func(*signalcli.Message)) {
 	// parse the message
 	var args Args
 	parser, err := arg.NewParser(arg.Config{}, &args)
@@ -127,7 +127,7 @@ func (r *Freezer) Handle(m *signaldbus.Message, signal signalsender.SignalSender
 	}
 }
 
-func (r *Freezer) Close(virtRcv func(*signaldbus.Message)) {
+func (r *Freezer) Close(virtRcv func(*signalcli.Message)) {
 	r.Module.Close(virtRcv)
 
 	r.db.Close()

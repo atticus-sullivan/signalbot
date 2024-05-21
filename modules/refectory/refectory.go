@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"signalbot_go/internal/signalsender"
 	"signalbot_go/modules"
-	"signalbot_go/signaldbus"
+	"signalbot_go/signalcli"
 	"time"
 
 	"github.com/alexflint/go-arg"
@@ -97,9 +97,9 @@ type Args struct {
 	Quiet bool   `arg:"-q,--quiet" default:"false"`
 }
 
-// Handle a message from the signaldbus. Parses the message, executes the query
+// Handle a message from the signalcli. Parses the message, executes the query
 // and responds to signal.
-func (r *Refectory) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
+func (r *Refectory) Handle(m *signalcli.Message, signal signalsender.SignalSender, virtRcv func(*signalcli.Message)) {
 	// parse the message
 	var args Args
 	parser, err := arg.NewParser(arg.Config{}, &args)

@@ -22,7 +22,7 @@ import (
 	"path/filepath"
 	"signalbot_go/internal/signalsender"
 	"signalbot_go/modules"
-	"signalbot_go/signaldbus"
+	"signalbot_go/signalcli"
 	"sort"
 	"strings"
 
@@ -83,9 +83,9 @@ type Args struct {
 	Insert string `arg:"-i,--insert"`
 }
 
-// Handle a message from the signaldbus. Parses the message, executes the query
+// Handle a message from the signalcli. Parses the message, executes the query
 // and responds to signal.
-func (r *Buechertreff) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
+func (r *Buechertreff) Handle(m *signalcli.Message, signal signalsender.SignalSender, virtRcv func(*signalcli.Message)) {
 	// parse the message
 	var args Args
 	parser, err := arg.NewParser(arg.Config{}, &args)
@@ -152,7 +152,7 @@ func (r *Buechertreff) Handle(m *signaldbus.Message, signal signalsender.SignalS
 
 // save config file in case something has changed (module allows to add new
 // series during runtime)
-func (r *Buechertreff) Close(virtRcv func(*signaldbus.Message)) {
+func (r *Buechertreff) Close(virtRcv func(*signalcli.Message)) {
 	r.Module.Close(virtRcv)
 
 	f, err := os.Create(filepath.Join(r.ConfigDir, "buechertreff.yaml"))

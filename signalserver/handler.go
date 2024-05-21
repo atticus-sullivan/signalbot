@@ -19,15 +19,15 @@ package signalserver
 import (
 	"fmt"
 	"signalbot_go/internal/signalsender"
-	"signalbot_go/signaldbus"
+	"signalbot_go/signalcli"
 	"strings"
 )
 
 // can handle a signal-message
 type Handler interface {
-	Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message))
-	Start(virtRcv func(*signaldbus.Message)) error
-	Close(virtRcv func(*signaldbus.Message))
+	Handle(m *signalcli.Message, signal signalsender.SignalSender, virtRcv func(*signalcli.Message))
+	Start(virtRcv func(*signalcli.Message)) error
+	Close(virtRcv func(*signalcli.Message))
 }
 
 // config for a handler. Can be parsed from yaml

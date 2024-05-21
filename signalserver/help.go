@@ -19,7 +19,7 @@ package signalserver
 import (
 	"fmt"
 	"signalbot_go/internal/signalsender"
-	"signalbot_go/signaldbus"
+	"signalbot_go/signalcli"
 	"strings"
 
 	"log/slog"
@@ -65,13 +65,13 @@ func (r *Help) Validate() error {
 	return nil
 }
 
-func (r *Help) sendError(m *signaldbus.Message, signal signalsender.SignalSender, reply string) {
+func (r *Help) sendError(m *signalcli.Message, signal signalsender.SignalSender, reply string) {
 	if _, err := signal.Respond(reply, nil, m, false); err != nil {
 		r.log.Error(fmt.Sprintf("Error responding to %v", m))
 	}
 }
 
-func (r *Help) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
+func (r *Help) Handle(m *signalcli.Message, signal signalsender.SignalSender, virtRcv func(*signalcli.Message)) {
 	var err error
 	builder := strings.Builder{}
 	for _, handler := range r.Handlers {
@@ -92,9 +92,9 @@ func (r *Help) Handle(m *signaldbus.Message, signal signalsender.SignalSender, v
 	}
 }
 
-func (r *Help) Start(virtRcv func(*signaldbus.Message)) error {
+func (r *Help) Start(virtRcv func(*signalcli.Message)) error {
 	return nil
 }
 
-func (r *Help) Close(virtRcv func(*signaldbus.Message)) {
+func (r *Help) Close(virtRcv func(*signalcli.Message)) {
 }

@@ -23,7 +23,7 @@ import (
 	"signalbot_go/internal/signalsender"
 	"signalbot_go/modules"
 	"signalbot_go/modules/tv/internal/show"
-	"signalbot_go/signaldbus"
+	"signalbot_go/signalcli"
 	"strings"
 	"time"
 
@@ -89,7 +89,7 @@ type Args struct {
 	Post uint   `arg:"-p,--post" default:"1"`
 }
 
-func (r *Tv) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
+func (r *Tv) Handle(m *signalcli.Message, signal signalsender.SignalSender, virtRcv func(*signalcli.Message)) {
 	var args Args
 	parser, err := arg.NewParser(arg.Config{}, &args)
 	if err != nil {

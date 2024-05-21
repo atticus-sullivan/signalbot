@@ -23,9 +23,7 @@ import (
 	"path/filepath"
 	"time"
 
-	// "runtime"
 	"signalbot_go/signalserver"
-	// "strings"
 	"syscall"
 
 	"github.com/lmittmann/tint"

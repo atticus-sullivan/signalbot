@@ -32,7 +32,7 @@ import (
 // group (empty if none). The returned groupId is the identification of the new
 // group.
 // Might raise `AttachmentInvalid`, `Failure`, `InvalidNumber` exceptions.
-func (s *Account) CreateGroup(groupName string, members []string, avatar string) (groupId []byte, err error) {
+func (s *SignalCliDriver) CreateGroup(groupName string, members []string, avatar string) (groupId []byte, err error) {
 	// TODO arg members: phone numbers or names?
 	call := s.obj.Call("org.asamk.Signal.createGroup", 0, groupName, members, avatar)
 	if call.Err != nil {
@@ -55,7 +55,7 @@ func (s *Account) CreateGroup(groupName string, members []string, avatar string)
 }
 
 // TODO how to return an invalid objectpath and we shouldn't expose dbus stuff here
-// func (s *Account) GetGroup(groupId []byte) (objectPath dbus.ObjectPath, err error) {
+// func (s *SignalCliDriver) GetGroup(groupId []byte) (objectPath dbus.ObjectPath, err error) {
 // 	call := s.obj.Call("org.asamk.Signal.getGroup", 0, groupId)
 // 	if call.Err != nil {
 // 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -72,7 +72,7 @@ func (s *Account) CreateGroup(groupName string, members []string, avatar string)
 
 // Translate a groupId to the name of the group.
 // Might raise InvalidGroupId exception
-func (s *Account) GetGroupName(groupId []byte) (name string, err error) {
+func (s *SignalCliDriver) GetGroupName(groupId []byte) (name string, err error) {
 	call := s.obj.Call("org.asamk.Signal.getGroupName", 0, groupId)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -93,7 +93,7 @@ func (s *Account) GetGroupName(groupId []byte) (name string, err error) {
 // groupId identifies the group to query. The returned members is a string
 // array with the phoneNumbers of all active members (if the group wasn't found
 // this array is empty).
-func (s *Account) GetGroupMembers(groupId []byte) (members []string, err error) {
+func (s *SignalCliDriver) GetGroupMembers(groupId []byte) (members []string, err error) {
 	call := s.obj.Call("org.asamk.Signal.getGroupMembers", 0, groupId)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -111,7 +111,7 @@ func (s *Account) GetGroupMembers(groupId []byte) (members []string, err error) 
 // Join a group with an inviteURI.
 // inviteURI is the URI of the invitation.
 // Might raise `Failure` exception.
-func (s *Account) JoinGroup(inviteURI string) (err error) {
+func (s *SignalCliDriver) JoinGroup(inviteURI string) (err error) {
 	call := s.obj.Call("org.asamk.Signal.joinGroup", 0, inviteURI)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -126,7 +126,7 @@ func (s *Account) JoinGroup(inviteURI string) (err error) {
 }
 
 // TODO how to return an invalid objectpath and we shouldn't expose dbus stuff here
-// func (s *Account) ListGroups() (groups<a(oays)>, err error) {
+// func (s *SignalCliDriver) ListGroups() (groups<a(oays)>, err error) {
 // 	listGroups
 // }
 
@@ -136,7 +136,7 @@ func (s *Account) JoinGroup(inviteURI string) (err error) {
 // identifies the group to send to. The returned timestamp can be used to
 // identify the corresponding signal reply.
 // Might raise `GroupNotFound`, `Failure`, `AttachmentInvalid`, `InvalidGroupId` exceptions.`
-func (s *Account) SendGroupMessage(message string, attachments []string, groupId []byte) (timestamp int64, err error) {
+func (s *SignalCliDriver) SendGroupMessage(message string, attachments []string, groupId []byte) (timestamp int64, err error) {
 	call := s.obj.Call("org.asamk.Signal.sendGroupMessage", 0, message, attachments, groupId)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -163,7 +163,7 @@ func (s *Account) SendGroupMessage(message string, attachments []string, groupId
 // groupId identifies the group to send to, if stop is true the typing
 // indicator is stopped.
 // Might raise `Failure`, `GroupNotFound`, `UntrustedIdentity` exceptions.
-func (s *Account) SendGroupTyping(groupId []byte, stop bool) (err error) {
+func (s *SignalCliDriver) SendGroupTyping(groupId []byte, stop bool) (err error) {
 	call := s.obj.Call("org.asamk.Signal.sendGroupTyping", 0, groupId, stop)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -187,7 +187,7 @@ func (s *Account) SendGroupTyping(groupId []byte, stop bool) (err error) {
 // react to, targetSentTimestamp identifies the message to work on, groupID
 // identifies the group wor work on.
 // Might raise `Failure`, `InvalidNumber`, `GroupNotFound`, `InvalidGroupId` exceptions.
-func (s *Account) SendGroupMessageReaction(emoji string, remove bool, targetAuthor string, targetSentTimestamp int64, groupId []byte) (timestamp int64, err error) {
+func (s *SignalCliDriver) SendGroupMessageReaction(emoji string, remove bool, targetAuthor string, targetSentTimestamp int64, groupId []byte) (timestamp int64, err error) {
 	call := s.obj.Call("org.asamk.Signal.sendGroupMessageReaction", 0, emoji, remove, targetAuthor, targetSentTimestamp, groupId)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed
@@ -214,7 +214,7 @@ func (s *Account) SendGroupMessageReaction(emoji string, remove bool, targetAuth
 // targetSentTimestamp identifies the message to delete, groupId identifies the
 // group to work on. The returned Timestamp can be used to identify the correspnding signal reply.
 // Might raise `Failure`, `GroupNotFound`, `InvalidGroupId` exceptions.
-func (s *Account) SendGroupRemoteDeleteMessage(targetSentTimestamp int64, groupId []byte) (timestamp int64, err error) {
+func (s *SignalCliDriver) SendGroupRemoteDeleteMessage(targetSentTimestamp int64, groupId []byte) (timestamp int64, err error) {
 	call := s.obj.Call("org.asamk.Signal.sendGroupRemoteDeleteMessage", 0, targetSentTimestamp, groupId)
 	if call.Err != nil {
 		err := call.Err.(dbus.Error) // panics if assertion does not succeed

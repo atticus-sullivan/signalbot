@@ -23,7 +23,7 @@ import (
 	"signalbot_go/internal/differ"
 	"signalbot_go/internal/signalsender"
 	"signalbot_go/modules"
-	"signalbot_go/signaldbus"
+	"signalbot_go/signalcli"
 	"sort"
 	"strings"
 
@@ -112,9 +112,9 @@ type Args struct {
 	Data   bool   `arg:"-d,--data" default:"true"`
 }
 
-// Handle a message from the signaldbus. Parses the message, executes the query
+// Handle a message from the signalcli. Parses the message, executes the query
 // and responds to signal.
-func (r *Fernsehserien) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
+func (r *Fernsehserien) Handle(m *signalcli.Message, signal signalsender.SignalSender, virtRcv func(*signalcli.Message)) {
 	// parse the message
 	var args Args
 	parser, err := arg.NewParser(arg.Config{}, &args)
@@ -218,7 +218,7 @@ func (r *Fernsehserien) Handle(m *signaldbus.Message, signal signalsender.Signal
 
 // save config file in case something has changed (module allows to add new
 // series during runtime)
-func (r *Fernsehserien) Close(virtRcv func(*signaldbus.Message)) {
+func (r *Fernsehserien) Close(virtRcv func(*signalcli.Message)) {
 	r.Module.Close(virtRcv)
 
 	delete(r.Aliases, "all") // "all" alias is always a generated one

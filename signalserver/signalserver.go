@@ -36,7 +36,8 @@ import (
 	"signalbot_go/modules/refectory"
 	"signalbot_go/modules/tv"
 	"signalbot_go/modules/weather"
-	"signalbot_go/signaldbus"
+	"signalbot_go/signalcli"
+	signaldbus "signalbot_go/signalcli/drivers/dbus"
 	"strings"
 
 	"log/slog"
@@ -48,7 +49,7 @@ import (
 type SignalServer struct {
 	SignalServerCfg
 	prefix2module     map[string]string
-	acc               *signaldbus.Account
+	acc               *signalcli.Account
 	self              string
 	modules           map[string]Handler
 	log               *slog.Logger
@@ -79,22 +80,22 @@ func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalSe
 		SignalServerCfg: cfg,
 	}
 
-	s.acc, err = signaldbus.NewAccount(log.With(), s.Dbus)
+	driver, err := signaldbus.NewSignalDbusDriver(log.With(), s.Dbus)
 	if err != nil {
 		return nil, err
 	}
 
-	s.self, err = s.acc.GetSelfNumber()
+	s.acc, err = signalcli.NewAccount(log.With(), driver)
 	if err != nil {
 		return nil, err
 	}
 
 	// register functions for handling the messages
 	// run the handler in a new goroutine so that new messages can be received
-	if err := s.acc.AddMessageHandlerFunc(func(m *signaldbus.Message) { go s.handle(m) }); err != nil {
+	if err := s.acc.AddMessageHandlerFunc(func(m *signalcli.Message) { go s.handle(m) }); err != nil {
 		return nil, err
 	}
-	if err := s.acc.AddSyncMessageHandlerFunc(func(m *signaldbus.SyncMessage) { go s.handle(&m.Message) }); err != nil {
+	if err := s.acc.AddSyncMessageHandlerFunc(func(m *signalcli.SyncMessage) { go s.handle(&m.Message) }); err != nil {
 		return nil, err
 	}
 
@@ -205,7 +206,7 @@ func (s *SignalServer) startPortSendMsg(ctx context.Context) error {
 				s.log.Info(fmt.Sprintf("SendMsg: Connected with %s", conn.RemoteAddr().String()))
 				go func(conn net.Conn) {
 					defer conn.Close()
-					m, err := signaldbus.NewMessageFromReader(conn, s.self)
+					m, err := signalcli.NewMessageFromReader(conn, s.self)
 					if err != nil || m == nil {
 						s.log.Error("SendMsg: Error on reading message from socket", "error", err)
 					}
@@ -241,7 +242,7 @@ func (s *SignalServer) startPortVirtRcv(ctx context.Context) error {
 				s.log.Info(fmt.Sprintf("VirtRcv: Connected with %s", conn.RemoteAddr().String()))
 				go func(conn net.Conn) {
 					defer conn.Close()
-					m, err := signaldbus.NewMessageFromReader(conn, s.self)
+					m, err := signalcli.NewMessageFromReader(conn, s.self)
 					if err != nil || m == nil {
 						s.log.Error("VirtRcv: Error on reading message from socket", "error", err)
 					}
@@ -296,7 +297,7 @@ func (s *SignalServer) Close() {
 }
 
 // handle a complete signalmessage
-func (s *SignalServer) handle(m *signaldbus.Message) {
+func (s *SignalServer) handle(m *signalcli.Message) {
 	// unwrap -r
 	if m.Message == "-r" {
 		if m.GroupId != nil {
@@ -328,7 +329,7 @@ func (s *SignalServer) handle(m *signaldbus.Message) {
 }
 
 // handle the signalmessage as single command
-func (s *SignalServer) handleLine(m *signaldbus.Message) {
+func (s *SignalServer) handleLine(m *signalcli.Message) {
 	// TODO alias
 	prefix, remainingMsg, _ := strings.Cut(m.Message, " ")
 	module, set := s.prefix2module[prefix]

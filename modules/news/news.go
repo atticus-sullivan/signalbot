@@ -23,7 +23,7 @@ import (
 	"signalbot_go/internal/differ"
 	"signalbot_go/internal/signalsender"
 	"signalbot_go/modules"
-	"signalbot_go/signaldbus"
+	"signalbot_go/signalcli"
 
 	"github.com/alexflint/go-arg"
 	"log/slog"
@@ -86,9 +86,9 @@ type Args struct {
 	Quiet bool `arg:"-q,--quiet" default:"false"`
 }
 
-// Handle a message from the signaldbus. Parses the message, executes the query
+// Handle a message from the signalcli. Parses the message, executes the query
 // and responds to signal.
-func (r *News) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
+func (r *News) Handle(m *signalcli.Message, signal signalsender.SignalSender, virtRcv func(*signalcli.Message)) {
 	// parse the message
 	var args Args
 	parser, err := arg.NewParser(arg.Config{}, &args)
@@ -168,7 +168,7 @@ func (r *News) Handle(m *signaldbus.Message, signal signalsender.SignalSender, v
 
 // save config file in case something has changed (last with the differ might
 // have changed)
-func (r *News) Close(virtRcv func(*signaldbus.Message)) {
+func (r *News) Close(virtRcv func(*signalcli.Message)) {
 	r.Module.Close(virtRcv)
 
 	f, err := os.Create(filepath.Join(r.ConfigDir, "news.yaml"))

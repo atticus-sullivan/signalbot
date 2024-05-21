@@ -26,7 +26,7 @@ import (
 	cmdsplit "signalbot_go/internal/cmdSplit"
 	"signalbot_go/internal/signalsender"
 	"signalbot_go/modules"
-	"signalbot_go/signaldbus"
+	"signalbot_go/signalcli"
 
 	"log/slog"
 	"gopkg.in/yaml.v3"
@@ -101,7 +101,7 @@ func (r *Cmd) Validate() error {
 }
 
 // handle a signalmessage
-func (r *Cmd) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message)) {
+func (r *Cmd) Handle(m *signalcli.Message, signal signalsender.SignalSender, virtRcv func(*signalcli.Message)) {
 	args, err := cmdsplit.Split(m.Message)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error: %v", err)

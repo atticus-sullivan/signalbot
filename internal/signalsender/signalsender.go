@@ -16,7 +16,7 @@ package signalsender
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import "signalbot_go/signaldbus"
+import "signalbot_go/signalcli"
 
 // an interface which allows to send data to signal
 type SignalSender interface {
@@ -25,5 +25,5 @@ type SignalSender interface {
 	// recipient is ignored)
 	SendGeneric(message string, attachments []string, recipient string, groupID []byte, notify bool) (timestamp int64, err error)
 	// respond to a certain message. The recipient/groupID will be extracted from the message
-	Respond(message string, attachments []string, m *signaldbus.Message, notify bool) (timestamp int64, err error)
+	Respond(message string, attachments []string, m *signalcli.Message, notify bool) (timestamp int64, err error)
 }
