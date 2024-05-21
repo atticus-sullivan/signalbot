@@ -23,7 +23,7 @@ import (
 	"io"
 	cmdsplit "signalbot_go/internal/cmdSplit"
 	"signalbot_go/internal/signalsender"
-	"signalbot_go/signaldbus"
+	"signalbot_go/signalcli"
 
 	"github.com/alexflint/go-arg"
 	"log/slog"
@@ -48,14 +48,14 @@ func (r *Module) Validate() error {
 }
 
 // shortcut for sending an error via signal. If this fails log error.
-func (r *Module) SendError(m *signaldbus.Message, signal signalsender.SignalSender, reply string) {
+func (r *Module) SendError(m *signalcli.Message, signal signalsender.SignalSender, reply string) {
 	if _, err := signal.Respond(reply, nil, m, false); err != nil {
 		r.Log.Error(fmt.Sprintf("Error responding to %v", m))
 	}
 }
 
 // returns whether an error ocurred (error is already logged and sent to the user)
-func (r *Module) Handle(m *signaldbus.Message, signal signalsender.SignalSender, virtRcv func(*signaldbus.Message), parser *arg.Parser) error {
+func (r *Module) Handle(m *signalcli.Message, signal signalsender.SignalSender, virtRcv func(*signalcli.Message), parser *arg.Parser) error {
 
 	vargs, err := cmdsplit.Split(m.Message)
 	if err != nil {
@@ -102,9 +102,9 @@ func (r *Module) Handle(m *signaldbus.Message, signal signalsender.SignalSender,
 	return nil
 }
 
-func (r *Module) Start(virtRcv func(*signaldbus.Message)) error {
+func (r *Module) Start(virtRcv func(*signalcli.Message)) error {
 	return nil
 }
 
-func (r *Module) Close(virtRcv func(*signaldbus.Message)) {
+func (r *Module) Close(virtRcv func(*signalcli.Message)) {
 }
