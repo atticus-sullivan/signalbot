@@ -86,7 +86,7 @@ func (d *Differ[S, T, U]) Diff(l1 S, l2 T, dataB []U) string {
 	for _, dA := range dataA {
 		found := false
 		for _, dB := range dataB {
-			if dA == dB {
+			if dA.Equals(dB) {
 				found = true
 				break
 			}
@@ -109,7 +109,7 @@ func (d *Differ[S, T, U]) Diff(l1 S, l2 T, dataB []U) string {
 	for _, dB := range dataB {
 		found := false
 		for _, dA := range dataA {
-			if dA == dB {
+			if dA.Equals(dB) {
 				found = true
 				break
 			}
