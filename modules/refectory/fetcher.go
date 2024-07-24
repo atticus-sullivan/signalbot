@@ -2,17 +2,17 @@ package refectory
 
 // signalbot
 // Copyright (C) 2024  Lukas Heindl
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -24,8 +24,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/andybalholm/cascadia"
 	"log/slog"
+
+	"github.com/andybalholm/cascadia"
 	"golang.org/x/net/html"
 )
 
@@ -79,6 +80,30 @@ type Meal struct {
 	Categories []Category
 	Co2Grade Co2
 	WaterGrade Water
+}
+
+func (m Meal) Compare(other Meal) int {
+	if m.Name != other.Name {
+		return strings.Compare(m.Name, other.Name)
+	}
+
+	// if m.Co2Grade != other.Co2Grade {
+	// 	return int(m.Co2Grade) - int(other.Co2Grade)
+	// }
+	// if m.WaterGrade != other.WaterGrade {
+	// 	return int(m.WaterGrade) - int(other.WaterGrade)
+	// }
+
+	for i,c := range m.Categories {
+		if !(len(other.Categories) > i) {
+			break
+		}
+		if c != other.Categories[i] {
+			return int(c) - int(other.Categories[i])
+		}
+	}
+
+	return len(m.Categories) - len(other.Categories)
 }
 
 // stringer
@@ -185,7 +210,9 @@ func (f *Fetcher) getFromReader(reader io.Reader) (Menu, error) {
 		}
 		if typeNodes[0].FirstChild != nil {
 			typeStr = typeNodes[0].FirstChild.Data
-			menu.ordering = append(menu.ordering, typeStr)
+			if typeLast != typeStr {
+				menu.ordering = append(menu.ordering, typeStr)
+			}
 			typeLast = typeStr
 		} else {
 			typeStr = typeLast
@@ -263,5 +290,18 @@ func (f *Fetcher) getFromReader(reader io.Reader) (Menu, error) {
 			WaterGrade : water,
 		})
 	}
+
+	for t,ms := range menu.meals {
+		menu.meals[t] = nil
+		// slices.SortFunc(ms, func(a Meal, b Meal) int {
+		// 	return a.Compare(b)
+		// })
+		for _, i := range ms {
+			if len(menu.meals[t]) == 0 || i.Compare(menu.meals[t][len(menu.meals[t])-1]) != 0 {
+				menu.meals[t] = append(menu.meals[t], i)
+			}
+		}
+	}
+
 	return menu, nil
 }

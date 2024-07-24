@@ -47,59 +47,67 @@ func TestFetcher(t *testing.T) {
 
 	ord := []string{"Pasta", "Pizza", "Grill", "Wok", "Studitopf", "Fleisch", "Vegan", "Beilagen"}
 	meals := map[string][]Meal{
-		"Pasta": {Meal{
-			Name:       "Pasta mit Sojabolognese",
-			Categories: []Category{VEGAN},
-			Co2Grade: Co2('A'),
-			WaterGrade: Water('B'),
-		}},
-		"Pizza": {Meal{
-			Name:       "Pizza Margherita mit Mozzarella",
-			Categories: []Category{VEGGY},
-			Co2Grade: Co2('B'),
-			WaterGrade: Water('B'),
-		}},
-		"Grill": {Meal{
-			Name:       "Bierbrauersteak (1 Stück) (S vom Strohschwein) mit Zwiebelschmelze",
-			Categories: []Category{},
-			Co2Grade: Co2('C'),
-			WaterGrade: Water('A'),
-		}},
-		"Wok": {Meal{
-			Name:       "Puten-Gemüse-Curry",
-			Categories: []Category{},
-			Co2Grade: Co2('B'),
-			WaterGrade: Water('B'),
-		}},
-		"Studitopf": {Meal{
-			Name:       "Asiatisches Gemüse mit Chinakohl (scharf)",
-			Categories: []Category{VEGAN},
-			Co2Grade: Co2('B'),
-			WaterGrade: Water('A'),
-		},
+		"Pasta": {
+			Meal{
+				Name:       "Pasta mit Sojabolognese",
+				Categories: []Category{VEGAN},
+				Co2Grade: Co2('A'),
+				WaterGrade: Water('B'),
+			}},
+		"Pizza": {
+			Meal{
+				Name:       "Pizza Margherita mit Mozzarella",
+				Categories: []Category{VEGGY},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('B'),
+			}},
+		"Grill": {
+			Meal{
+				Name:       "Bierbrauersteak (1 Stück) (S vom Strohschwein) mit Zwiebelschmelze",
+				Categories: []Category{},
+				Co2Grade: Co2('C'),
+				WaterGrade: Water('A'),
+			}},
+		"Wok": {
+			Meal{
+				Name:       "Puten-Gemüse-Curry",
+				Categories: []Category{},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('B'),
+			}},
+		"Studitopf": {
+			Meal{
+				Name:       "Asiatisches Gemüse mit Chinakohl (scharf)",
+				Categories: []Category{VEGAN},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('A'),
+			},
 			Meal{Name: "Tomatenrahmsuppe",
 				Categories: []Category{},
 				Co2Grade: Co2('B'),
 				WaterGrade: Water('A'),
 			}},
-		"Fleisch": {Meal{
-			Name:       "Fleischpflanzerl mit Kümmelsauce",
-			Categories: []Category{BEEF, PORK},
-			Co2Grade: Co2('B'),
-			WaterGrade: Water('B'),
-		}},
-		"Vegan": {Meal{
-			Name:       "Ofengemüse mit weißem Bohnenpüree und Basilikumpesto",
-			Categories: []Category{VEGAN},
-			Co2Grade: Co2('A'),
-			WaterGrade: Water('C'),
-		}},
-		"Beilagen": {Meal{
-			Name:       "Asia Reis Bowl mit Tofu",
-			Categories: []Category{VEGAN},
-			Co2Grade: Co2('B'),
-			WaterGrade: Water('A'),
-		},
+		"Fleisch": {
+			Meal{
+				Name:       "Fleischpflanzerl mit Kümmelsauce",
+				Categories: []Category{BEEF, PORK},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('B'),
+			}},
+		"Vegan": {
+			Meal{
+				Name:       "Ofengemüse mit weißem Bohnenpüree und Basilikumpesto",
+				Categories: []Category{VEGAN},
+				Co2Grade: Co2('A'),
+				WaterGrade: Water('C'),
+			}},
+		"Beilagen": {
+			Meal{
+				Name:       "Asia Reis Bowl mit Tofu",
+				Categories: []Category{VEGAN},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('A'),
+			},
 			Meal{Name: "Basmatireis",
 				Categories: []Category{VEGAN},
 				Co2Grade: Co2('B'),
