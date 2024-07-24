@@ -176,7 +176,7 @@ type Fetcher struct{}
 
 // get the content from the internet
 func (f *Fetcher) getNewsReader() (io.ReadCloser, error) {
-	response, err := http.Get("https://www.tagesschau.de/api2/homepage/")
+	response, err := http.Get("https://www.tagesschau.de/api2u/homepage/")
 	if err != nil {
 		return nil, err
 	}
