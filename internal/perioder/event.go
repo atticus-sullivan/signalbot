@@ -136,5 +136,5 @@ func (event *ReocEventImpl[T]) Metadata() T {
 
 func (r ReocEventImpl[T]) String() string {
 	// return fmt.Sprintf("{id: %v, start: %v, int: %v, desc: %v}", r.Id, r.Start, r.Interval, r.Description)
-	return fmt.Sprintf("{start: %v, int: %v, desc: %v}", r.Start.Format(time.RFC3339), r.Interval, r.Description)
+	return fmt.Sprintf("{desc: %v, start: %v, int: %v}", r.Description, r.Start.Format(time.RFC3339), r.Interval)
 }
