@@ -371,5 +371,9 @@ func (s *SignalServer) handleLine(m *signalcli.Message) {
 
 	s.log.Info(fmt.Sprintf("Handling: %v -> %v", m, remainingMsg))
 	m.Message = remainingMsg
-	s.modules[module].Handle(m, s.acc, s.handle)
+	if mod,ok := s.modules[module]; !ok {
+		s.log.Error("Trying to call module which is registered but not available", "module", module)
+	} else {
+		mod.Handle(m, s.acc, s.handle)
+	}
 }
