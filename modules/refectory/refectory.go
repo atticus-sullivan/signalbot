@@ -150,7 +150,7 @@ func (r *Refectory) Handle(m *signalcli.Message, signal signalsender.SignalSende
 			continue
 		}
 		// respond
-		menuS := fmt.Sprintf("%s on %s\n", ref, date.Format("2006-01-02")) + menu.String()
+		menuS := fmt.Sprintf("%s on %s\n", ref, date.Format("Mon 2006-01-02")) + menu.String()
 		_, err = signal.Respond(menuS, []string{}, m, true)
 		if err != nil {
 			errMsg := fmt.Sprintf("Error: %v", err)
