@@ -38,7 +38,7 @@ var (
 var (
 	cascMeal cascadia.Selector = cascadia.MustCompile(".c-schedule__list-item")
 	cascType cascadia.Selector = cascadia.MustCompile(".stwm-artname")
-	cascDesc cascadia.Selector = cascadia.MustCompile(".js-schedule-dish-description")
+	cascDesc cascadia.Selector = cascadia.MustCompile(".c-menu-dish__title")
 )
 
 // enum with the different food categories
@@ -57,10 +57,28 @@ func (c Category) String() string {
 	return string(c)
 }
 
+// enum with the different Co2 grades
+type Co2 rune
+
+// stringer
+func (c Co2) String() string {
+	return string(c)
+}
+
+// enum with the different Water grades
+type Water rune
+
+// stringer
+func (c Water) String() string {
+	return string(c)
+}
+
 // represents one meal with name and a list of categories
 type Meal struct {
 	Name       string
 	Categories []Category
+	Co2Grade Co2
+	WaterGrade Water
 }
 
 // stringer
@@ -188,6 +206,10 @@ func (f *Fetcher) getFromReader(reader io.Reader) (Menu, error) {
 
 		// categories
 		cats := make([]Category, 0)
+		// co2
+		var co2 Co2
+		// water
+		var water Water
 		for _, a := range meal.Attr {
 			if a.Key == "data-essen-fleischlos" {
 				switch a.Val {
@@ -220,6 +242,14 @@ func (f *Fetcher) getFromReader(reader io.Reader) (Menu, error) {
 					default:
 					}
 				}
+			} else if a.Key == "data-essen-co2-bewertung" {
+				if len(a.Val) > 0 {
+					co2 = Co2(a.Val[0])
+				}
+			} else if a.Key == "data-essen-h2o-bewertung" {
+				if len(a.Val) > 0 {
+					water = Water(a.Val[0])
+				}
 			}
 		}
 		_, ok := menu.meals[typeStr]
@@ -229,6 +259,8 @@ func (f *Fetcher) getFromReader(reader io.Reader) (Menu, error) {
 		menu.meals[typeStr] = append(menu.meals[typeStr], Meal{
 			Name:       strings.TrimSpace(descStr),
 			Categories: cats,
+			Co2Grade : co2,
+			WaterGrade : water,
 		})
 	}
 	return menu, nil

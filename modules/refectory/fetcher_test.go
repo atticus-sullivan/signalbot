@@ -25,7 +25,7 @@ import (
 )
 
 func nopLog() *slog.Logger {
-	return slog.New(slog.HandlerOptions{Level: slog.LevelError}.NewTextHandler(io.Discard))
+	return slog.New(slog.NewTextHandler(io.Discard, &slog.HandlerOptions{Level: slog.LevelError}))
 }
 
 func TestFetcher(t *testing.T) {
@@ -45,76 +45,128 @@ func TestFetcher(t *testing.T) {
 		panic(err)
 	}
 
-	ord := []string{"Pasta", "Grill", "Wok", "Studitopf", "Vegetarisch/fleischlos", "Fleisch", "Beilagen"}
+	ord := []string{"Pasta", "Pizza", "Grill", "Wok", "Studitopf", "Fleisch", "Vegan", "Beilagen"}
 	meals := map[string][]Meal{
 		"Pasta": {Meal{
-			Name:       "Tortellini mit Ricotta-Spinat-Füllung in Kräutersauce",
+			Name:       "Pasta mit Sojabolognese",
+			Categories: []Category{VEGAN},
+			Co2Grade: Co2('A'),
+			WaterGrade: Water('B'),
+		}},
+		"Pizza": {Meal{
+			Name:       "Pizza Margherita mit Mozzarella",
 			Categories: []Category{VEGGY},
+			Co2Grade: Co2('B'),
+			WaterGrade: Water('B'),
 		}},
 		"Grill": {Meal{
-			Name:       "Cevapcici mit Ajvar",
-			Categories: []Category{BEEF},
+			Name:       "Bierbrauersteak (1 Stück) (S vom Strohschwein) mit Zwiebelschmelze",
+			Categories: []Category{},
+			Co2Grade: Co2('C'),
+			WaterGrade: Water('A'),
 		}},
 		"Wok": {Meal{
-			Name:       "Tofugeschnetzeltes China-Town",
-			Categories: []Category{VEGAN},
+			Name:       "Puten-Gemüse-Curry",
+			Categories: []Category{},
+			Co2Grade: Co2('B'),
+			WaterGrade: Water('B'),
 		}},
 		"Studitopf": {Meal{
-			Name:       "Bulgur indische Art",
+			Name:       "Asiatisches Gemüse mit Chinakohl (scharf)",
 			Categories: []Category{VEGAN},
+			Co2Grade: Co2('B'),
+			WaterGrade: Water('A'),
 		},
-			Meal{Name: "Tagessuppe",
+			Meal{Name: "Tomatenrahmsuppe",
 				Categories: []Category{},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('A'),
 			}},
-		"Vegetarisch/fleischlos": {Meal{
-			Name:       "Hausgemachte Gemüsequiche mit Schnittlauchdip",
-			Categories: []Category{VEGGY},
-		}},
 		"Fleisch": {Meal{
-			Name:       "Balinesisches Kokoshähnchen",
-			Categories: []Category{},
+			Name:       "Fleischpflanzerl mit Kümmelsauce",
+			Categories: []Category{BEEF, PORK},
+			Co2Grade: Co2('B'),
+			WaterGrade: Water('B'),
+		}},
+		"Vegan": {Meal{
+			Name:       "Ofengemüse mit weißem Bohnenpüree und Basilikumpesto",
+			Categories: []Category{VEGAN},
+			Co2Grade: Co2('A'),
+			WaterGrade: Water('C'),
 		}},
 		"Beilagen": {Meal{
-			Name:       "Countrykartoffeln",
-			Categories: []Category{VEGGY},
+			Name:       "Asia Reis Bowl mit Tofu",
+			Categories: []Category{VEGAN},
+			Co2Grade: Co2('B'),
+			WaterGrade: Water('A'),
 		},
-			Meal{Name: "Erbsen, natur",
+			Meal{Name: "Basmatireis",
 				Categories: []Category{VEGAN},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('A'),
 			},
-			Meal{Name: "Djuvecreis",
+			Meal{Name: "Petersilienkartoffeln",
 				Categories: []Category{VEGAN},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('A'),
 			},
 			Meal{Name: "Täglich frisches Gemüse",
 				Categories: []Category{},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('A'),
 			},
-			Meal{Name: "Zucchinis mit Karotten,Schwarzwurzel und grünen Bohnen",
+			Meal{Name: "Mediterranes Gemüse",
 				Categories: []Category{VEGAN},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('A'),
+			},
+			Meal{Name: "Fenchel-Tomaten-Gemüse",
+				Categories: []Category{VEGAN},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('A'),
 			},
 			Meal{Name: "Täglich frische Dessertbar",
 				Categories: []Category{},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('A'),
 			},
-			Meal{Name: "Täglich frische Salatbar",
+			Meal{Name: "Täglich frisches Salatbuffet",
 				Categories: []Category{},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('A'),
 			},
-			Meal{Name: "Vanillecreme mit passierten Himbeeren",
-				Categories: []Category{VEGGY},
+			Meal{Name: "Mousse au chocolat mit Orangen",
+				Categories: []Category{},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('A'),
+			},
+			Meal{Name: "Frischer Obstsalat",
+				Categories: []Category{VEGAN},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('A'),
 			},
 			Meal{Name: "Frische Melone mit Minze",
 				Categories: []Category{VEGAN},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('A'),
 			},
-			Meal{Name: "Sunset: Himbeer-Bananen-Smoothie mit Orangensaft",
+			Meal{Name: "Pina Colada: Smoothie mit Ananas und Kokos",
 				Categories: []Category{VEGAN},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('A'),
 			},
-			Meal{Name: "Pfirsich-Mango-Orangen-Saft",
+			Meal{Name: "Grüner Apfel-Zucchini-Saft mit Minze",
 				Categories: []Category{VEGAN},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('A'),
 			},
 		},
 	}
 	if len(menu.meals) != len(ord) {
-		t.Fatalf("Invalid number of meal buckets parsed")
+		t.Fatalf("Invalid number of meal buckets parsed (was %d, should %d)", len(menu.meals), len(ord))
 	}
 	if len(menu.ordering) != len(ord) {
-		t.Fatalf("Invalid number of meal buckets parsed")
+		t.Fatalf("Invalid number of meal buckets parsed  (was %d, should %d)", len(menu.ordering), len(ord))
 	}
 	for i := range ord {
 		if menu.ordering[i] != ord[i] {
@@ -130,7 +182,13 @@ func TestFetcher(t *testing.T) {
 				t.Fatalf("Wrong meal name. %s (should: %s)", m.Name, m_ref.Name)
 			}
 			if len(m.Categories) != len(m_ref.Categories) {
-				t.Fatalf("Wrong amount of categories")
+				t.Fatalf("Wrong amount of categories (%s: was %v, should %v)", m.Name, m.Categories, m_ref.Categories)
+			}
+			if m.Co2Grade != m_ref.Co2Grade {
+				t.Fatalf("Wrong co2 grade (%s: was %v, should %v)", m.Name, m.Co2Grade, m_ref.Co2Grade)
+			}
+			if m.WaterGrade != m_ref.WaterGrade {
+				t.Fatalf("Wrong water grade (%s: was %v, should %v)", m.Name, m.WaterGrade, m_ref.WaterGrade)
 			}
 			for k := range m_ref.Categories {
 				if m.Categories[k] != m_ref.Categories[k] {
@@ -146,6 +204,11 @@ func TestFetcher(t *testing.T) {
 
 	str := menu.String()
 	out, err := os.ReadFile("test1.out")
+	if err != nil {
+		panic(err)
+	}
+
+	err = os.WriteFile("test1.tout", []byte(str), 0666)
 	if err != nil {
 		panic(err)
 	}
