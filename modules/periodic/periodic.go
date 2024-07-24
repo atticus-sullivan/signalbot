@@ -2,17 +2,17 @@ package periodic
 
 // signalbot
 // Copyright (C) 2024  Lukas Heindl
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -26,10 +26,12 @@ import (
 	"signalbot_go/internal/signalsender"
 	"signalbot_go/modules"
 	"signalbot_go/signalcli"
+	"strings"
 	"time"
 
-	"github.com/alexflint/go-arg"
 	"log/slog"
+
+	"github.com/alexflint/go-arg"
 	"gopkg.in/yaml.v3"
 )
 
@@ -154,7 +156,16 @@ func (r *Periodic) Ls(ls *lsArgs, m signalcli.Message, signal signalsender.Signa
 			events[k] = v
 		}
 	}
-	if _, err := signal.Respond(fmt.Sprintf("%v\n", events), nil, &m, true); err != nil {
+	builder := strings.Builder{}
+	first := true
+	for i,j := range events {
+		if !first {
+			builder.WriteRune('\n')
+		}
+		builder.Write([]byte(fmt.Sprintf("%d: %v", i, j)))
+		first = false
+	}
+	if _, err := signal.Respond(builder.String(), nil, &m, true); err != nil {
 		r.Log.Error(fmt.Sprintf("error sending ls output: %v", err))
 	}
 }
