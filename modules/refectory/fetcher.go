@@ -37,7 +37,7 @@ var (
 )
 
 var (
-	cascMeal cascadia.Selector = cascadia.MustCompile(".c-schedule__list-item")
+	cascMeal cascadia.Selector = cascadia.MustCompile(".c-menu-dish-list__item")
 	cascType cascadia.Selector = cascadia.MustCompile(".stwm-artname")
 	cascDesc cascadia.Selector = cascadia.MustCompile(".c-menu-dish__title")
 )
