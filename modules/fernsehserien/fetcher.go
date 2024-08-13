@@ -36,7 +36,7 @@ var (
 )
 
 var (
-	cascItems  cascadia.Matcher = cascadia.MustCompile("[itemtype=\"http://schema.org/BroadcastEvent\"]:not(.termin-vergangenheit)")
+	cascItems  cascadia.Matcher = cascadia.MustCompile("[itemtype=\"http://schema.org/BroadcastEvent\"][role=\"row\"]:not(.termin-vergangenheit)")
 	cascDate   cascadia.Matcher = cascadia.MustCompile("[itemprop=\"startDate\"]")
 	cascSender cascadia.Matcher = cascadia.MustCompile("[itemprop=\"name\"]")
 )
