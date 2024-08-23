@@ -2,17 +2,17 @@ package refectory
 
 // signalbot
 // Copyright (C) 2024  Lukas Heindl
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -25,29 +25,33 @@ import (
 	"signalbot_go/signalcli"
 	"time"
 
-	"github.com/alexflint/go-arg"
 	"log/slog"
+
+	"github.com/alexflint/go-arg"
 	"gopkg.in/yaml.v3"
 )
 
 // Refectory module. Should be instanciated with `NewRefectory`.
 // data members are only global to be able to unmarshal them
-type Refectory struct {
+type Refectory[U FetcherReadCloser, T FetcherInter[U]] struct {
 	modules.Module
-	fetcher     Fetcher             `yaml:"-"`
+	fetcher     T                   `yaml:"-"`
 	Refectories map[string]uint     `yaml:"refectories"`
 	Aliases     map[string][]string `yaml:"aliases"`
 }
 
 // instanciates a new Refectory from a configuration file
 // (cfgDir/refectory.yaml)
-func NewRefectory(log *slog.Logger, cfgDir string) (*Refectory, error) {
-	r := Refectory{
+func NewRefectory(log *slog.Logger, cfgDir string) (*Refectory[*fetcherAllReadCloser, *FetcherAll], error) {
+	return newRefectoryWithFetcher(log, cfgDir, newFetcherAll())
+}
+
+func newRefectoryWithFetcher[U FetcherReadCloser, T FetcherInter[U]](log *slog.Logger, cfgDir string, fetcher T) (*Refectory[U,T], error) {
+	r := Refectory[U,T]{
 		Module: modules.NewModule(log, cfgDir),
-		fetcher: Fetcher{
-			log: log,
-		},
+		fetcher: fetcher,
 	}
+	r.fetcher.init(log)
 
 	f, err := os.Open(filepath.Join(r.ConfigDir, "refectory.yaml"))
 	if err != nil {
@@ -75,7 +79,7 @@ func NewRefectory(log *slog.Logger, cfgDir string) (*Refectory, error) {
 }
 
 // validates the refectory struct
-func (r *Refectory) Validate() error {
+func (r *Refectory[U,T]) Validate() error {
 	// validate the generic module first
 	if err := r.Module.Validate(); err != nil {
 		return err
@@ -99,7 +103,7 @@ type Args struct {
 
 // Handle a message from the signalcli. Parses the message, executes the query
 // and responds to signal.
-func (r *Refectory) Handle(m *signalcli.Message, signal signalsender.SignalSender, virtRcv func(*signalcli.Message)) {
+func (r *Refectory[U,T]) Handle(m *signalcli.Message, signal signalsender.SignalSender, virtRcv func(*signalcli.Message)) {
 	// parse the message
 	var args Args
 	parser, err := arg.NewParser(arg.Config{}, &args)
@@ -116,6 +120,7 @@ func (r *Refectory) Handle(m *signalcli.Message, signal signalsender.SignalSende
 	}
 
 	date := time.Now().Add(time.Hour * 24 * time.Duration(args.When))
+	date = time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
 
 	resolvedL, ok := r.Aliases[args.Where]
 	if !ok {

@@ -2,17 +2,17 @@ package refectory
 
 // signalbot
 // Copyright (C) 2024  Lukas Heindl
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -20,6 +20,7 @@ import (
 	"io"
 	"os"
 	"testing"
+	"time"
 
 	"log/slog"
 )
@@ -30,7 +31,7 @@ func nopLog() *slog.Logger {
 
 func TestFetcher(t *testing.T) {
 	log := nopLog()
-	ref, err := NewRefectory(log, "./")
+	ref, err := newRefectoryWithFetcher(log, "./", newFetcher())
 	if err != nil {
 		panic(err)
 	}
@@ -217,6 +218,147 @@ func TestFetcher(t *testing.T) {
 	}
 
 	err = os.WriteFile("test1.tout", []byte(str), 0666)
+	if err != nil {
+		panic(err)
+	}
+
+	if str != string(out) {
+		t.Fatalf("formatting is wrong")
+	}
+}
+
+func TestFetcherAll(t *testing.T) {
+	log := nopLog()
+	ref, err := newRefectoryWithFetcher(log, "./", newFetcherAll())
+	if err != nil {
+		panic(err)
+	}
+
+	f, err := os.Open("test2.html")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	menu, err := ref.fetcher.getFromReader(&fetcherAllReadCloser{f, time.Date(2024, 8, 27, 0, 0, 0, 0, time.UTC)})
+	if err != nil {
+		panic(err)
+	}
+
+	ord := []string{"Pasta", "Grill", "Wok", "Studitopf", "Vegetarisch/fleischlos", "Tagessupe", "Dessert (Glas)"}
+	meals := map[string][]Meal{
+		"Pasta": {
+			Meal{
+				Name:       "Pasta all'arrabiata",
+				Categories: []Category{VEGAN},
+				Co2Grade: Co2('A'),
+				WaterGrade: Water('B'),
+			},
+		},
+		"Grill": {
+			Meal{
+				Name:       "Rinderlende mit orientalischem Rub und Salsa",
+				Categories: []Category{},
+				Co2Grade: Co2('E'),
+				WaterGrade: Water('C'),
+			},
+		},
+		"Wok": {
+			Meal{
+				Name:       "Veganes Nasi Goreng mit Sprossen",
+				Categories: []Category{VEGAN},
+				Co2Grade: Co2('A'),
+				WaterGrade: Water('A'),
+			}},
+		"Studitopf": {
+			Meal{
+				Name:       "Levantinischer Bulgur mit roten Linsen, Spinat und Kichererbsen",
+				Categories: []Category{VEGAN},
+				Co2Grade: Co2('A'),
+				WaterGrade: Water('B'),
+			},
+		},
+		"Vegetarisch/fleischlos": {
+			Meal{
+				Name:       "Röstitaler mit Tomate und Käse überbacken",
+				Categories: []Category{VEGGY},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('A'),
+			},
+		},
+		"Tagessupe": {
+			Meal{
+				Name:       "Tagessuppe",
+				Categories: []Category{},
+				Co2Grade: Co2('E'),
+				WaterGrade: Water(0),
+			},
+		},
+		"Dessert (Glas)": {
+			Meal{Name: "Schoko-Mango-Triffle",
+				Categories: []Category{VEGGY},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('A'),
+			},
+			Meal{Name: "Frischer Obstsalat",
+				Categories: []Category{VEGAN},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('A'),
+			},
+			Meal{Name: "Frische Ananas mit Kokosflocken",
+				Categories: []Category{VEGAN},
+				Co2Grade: Co2('B'),
+				WaterGrade: Water('A'),
+			},
+		},
+	}
+	if len(menu.meals) != len(ord) {
+		t.Fatalf("Invalid number of meal buckets parsed (was %d, should %d)", len(menu.meals), len(ord))
+	}
+	if len(menu.ordering) != len(ord) {
+		t.Fatalf("Invalid number of meal buckets parsed  (was %d, should %d)", len(menu.ordering), len(ord))
+	}
+	for i := range ord {
+		if menu.ordering[i] != ord[i] {
+			t.Fatalf("Wrong ordering was %s (should: %s)", menu.ordering[i], ord[i])
+		}
+		if len(menu.meals[ord[i]]) != len(meals[ord[i]]) {
+			t.Fatalf("Wrong meals for %s. Was %v (should: %v)", ord[i], menu.meals[ord[i]], meals[ord[i]])
+		}
+		for j := range meals[ord[i]] {
+			m := menu.meals[ord[i]][j]
+			m_ref := meals[ord[i]][j]
+			if m.Name != m_ref.Name {
+				t.Fatalf("Wrong meal name. %s (should: %s)", m.Name, m_ref.Name)
+			}
+			if len(m.Categories) != len(m_ref.Categories) {
+				t.Fatalf("Wrong amount of categories (%s: was %v, should %v)", m.Name, m.Categories, m_ref.Categories)
+			}
+			if m.Co2Grade != m_ref.Co2Grade {
+				t.Fatalf("Wrong co2 grade (%s: was %v, should %v)", m.Name, m.Co2Grade, m_ref.Co2Grade)
+			}
+			if m.WaterGrade != m_ref.WaterGrade {
+				t.Fatalf("Wrong water grade (%s: was %v, should %v)", m.Name, m.WaterGrade, m_ref.WaterGrade)
+			}
+			for k := range m_ref.Categories {
+				if m.Categories[k] != m_ref.Categories[k] {
+					t.Fatalf("Wrong category")
+				}
+			}
+		}
+	}
+
+	// fo,_ := os.Create("test2.out")
+	// fo.Write([]byte(menu.String()))
+	// fo.Close()
+
+	str := menu.String()
+
+	err = os.WriteFile("test2.tout", []byte(str), 0666)
+	if err != nil {
+		panic(err)
+	}
+
+	out, err := os.ReadFile("test2.out")
 	if err != nil {
 		panic(err)
 	}
