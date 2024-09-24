@@ -55,7 +55,7 @@ func (f *Fetcher) Validate() error {
 }
 
 // get the content from the internet
-const baseUrl string = "https://api.openweathermap.org/data/3.0/onecall?"
+const baseUrl string = "https://api.openweathermap.org/data/2.5/onecall?"
 
 func (f *Fetcher) getReader(loc Position) (io.ReadCloser, error) {
 	params := url.Values{
