@@ -39,6 +39,7 @@ import (
 	"signalbot_go/signalcli"
 	signaldbus "signalbot_go/signalcli/drivers/dbus"
 	signaljsonrpc "signalbot_go/signalcli/drivers/jsonrpc"
+	signalconsole "signalbot_go/signalcli/drivers/console"
 	"strings"
 
 	"log/slog"
@@ -98,6 +99,11 @@ func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalSe
 		}
 	case DriverJsonRpc:
 		driver, err = signaljsonrpc.NewSignalJsonRpcDriver(log.With(), cfg.UnixSocket, cfg.SelfNr)
+		if err != nil {
+			return nil, err
+		}
+	case DriverConsole:
+		driver, err = signalconsole.NewSignalJsonRpcDriver(log.With(), cfg.UnixSocket, cfg.SelfNr)
 		if err != nil {
 			return nil, err
 		}

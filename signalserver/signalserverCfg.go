@@ -25,6 +25,7 @@ type UsedDriver string
 var (
 	DriverDbus UsedDriver = "dbus"
 	DriverJsonRpc UsedDriver = "jsonrpc"
+	DriverConsole UsedDriver = "console"
 )
 
 // configuration of a signalServer. Can be parsed by yaml
@@ -45,7 +46,7 @@ type SignalServerCfg struct {
 
 // check if stored values are valid
 func (c *SignalServerCfg) Validate() error {
-	if c.UsedDriver != DriverDbus && c.UsedDriver != DriverJsonRpc {
+	if c.UsedDriver != DriverDbus && c.UsedDriver != DriverJsonRpc && c.UsedDriver != DriverConsole {
 		return fmt.Errorf("Invalid driver set")
 	}
 	if c.UsedDriver == DriverDbus {
