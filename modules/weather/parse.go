@@ -23,91 +23,111 @@ import (
 	"time"
 )
 
-type openweatherWeatherCommon struct {
-	Dt         int64   `json:"dt"`
-	Humidity   float32 `json:"humidity"`
-	Clouds     float32 `json:"clouds"`
-	Uvi        float32 `json:"uvi"`
-	Wind_speed float32 `json:"wind_speed"`
-	WindDeg    float64 `json:"wind_deg"`
-	Weather    []struct {
-		Id          uint   `json:"id"`
-		Main        string `json:"main"`
-		Description string `json:"description"`
-		// Icon string `json:"icon"`
-	}
+type weatherHdr struct {
+	Latitude float64
+	Longitude float64
+	Elevation float64
+	Generationtime_ms float64
+	Utc_offset_seconds int
+	Timezone string
+	Timezone_abbreviation string
 }
 
-func (o *openweatherWeatherCommon) String() string {
-	// builder := strings.Builder{}
-	return ""
+type weatherHour struct {
+	Time []string
+	Weather_code []int
+
+	Temperature_2m []float64
+	Precipitation []float64
+	Snowfall []float64
+}
+type weatherHourU struct {
+	Time string
+	Weather_code string
+
+	Temperature_2m string
+	Precipitation string
+	Snowfall string
 }
 
-type openweatherWeatherCurrHour struct {
-	openweatherWeatherCommon
-	Temp float32 `json:"temp"`
-	Rain struct {
-		OneHour float32 `json:"1h"`
-	} `json:"rain"`
-	Snow struct {
-		OneHour float32 `json:"1h"`
-	} `json:"snow"`
+type weatherDaily struct {
+	Time []string
+	Weather_code []int
+
+	Uv_index_max []float64
+	Temperature_2m_max []float64
+	Temperature_2m_min []float64
+	Precipitation_sum []float64
+	Snowfall_sum []float64
+	Sunshine_duration []float64
+	Wind_speed_10m_max []float64
+	Wind_direction_10m_dominant []float64
+}
+type weatherDailyU struct {
+	Time string
+	Weather_code string
+
+	Uv_index_max string
+	Temperature_2m_max string
+	Temperature_2m_min string
+	Precipitation_sum string
+	Snowfall_sum string
+	Sunshine_duration string
+	Wind_speed_10m_max string
+	Wind_direction_10m_dominant string
 }
 
-func (o *openweatherWeatherCurrHour) String() string {
-	// builder := strings.Builder{}
-	return ""
+type weatherCurr struct {
+	Time string
+	Weather_code int
+
+	Temperature_2m float64
+	Relative_humidity_2m float64
+	Dew_point_2m float64
+	Cloud_cover float64
+	Wind_speed_10m float64
+	Wind_direction_10m float64
+	Wind_gusts_10m float64
+	Precipitation float64
+	Precipitation_probability float64
+	Snowfall float64
+}
+type weatherCurrU struct {
+	Time string
+	Weather_code string
+
+	Temperature_2m string
+	Relative_humidity_2m string
+	Dew_point_2m string
+	Cloud_cover string
+	Wind_speed_10m string
+	Wind_direction_10m string
+	Wind_gusts_10m string
+	Precipitation string
+	Precipitation_probability string
+	Snowfall string
 }
 
-type openweatherWeatherDay struct {
-	openweatherWeatherCommon
-	Rain float32 `json:"rain"`
-	Snow float32 `json:"snow"`
-	Temp struct {
-		Morn  float32 `json:"morn"`
-		Day   float32 `json:"day"`
-		Eve   float32 `json:"eve"`
-		Night float32 `json:"night"`
-		Min   float32 `json:"min"`
-		Max   float32 `json:"max"`
-	} `json:"temp"`
-}
-
-// func (o *openweatherWeatherDay) String() string {
-// 	// builder := strings.Builder{}
-// 	return ""
-// }
-
-type openweatherWeatherAlert struct {
-	SenderName  string   `json:"sender_name"`
-	Event       string   `json:"event"`
-	Start       int64    `json:"start"`
-	End         int64    `json:"end"`
-	Description string   `json:"description"`
-	Tags        []string `json:"tags"`
-}
-
-// func (o *openweatherWeatherAlert) String() string {
-// 	// builder := strings.Builder{}
-// 	return ""
-// }
-
-type openweatherResp struct {
-	Lat            float32                      `json:"lat"`
-	Lon            float32                      `json:"lon"`
-	Timezone       string                       `json:"timezone"`
-	TimezoneOffset int                          `json:"timezone_offset"`
-	Current        openweatherWeatherCurrHour   `json:"current"`
-	Hourly         []openweatherWeatherCurrHour `json:"hourly"`
-	Daily          []openweatherWeatherDay      `json:"daily"`
-	Alerts         []openweatherWeatherAlert    `json:"alerts"`
+type weatherResp struct {
+	weatherHdr
+	Current         weatherCurr    `json:"current"`
+	CurrentU        weatherCurrU   `json:"current_units"`
+	Hourly          weatherHour    `json:"hourly"`
+	HourlyU         weatherHourU   `json:"hourly_units"`
+	Daily           weatherDaily   `json:"daily"`
+	DailyU          weatherDailyU  `json:"daily_units"`
 }
 
 // TODO len(weather) > 1 => warn + write json to file
 
-func (o *openweatherResp) String() string {
+var weatherDateTimeFormat string = "2006-01-02T15:04"
+
+func (o *weatherResp) String() string {
 	builder := strings.Builder{}
-	date := time.Unix(o.Current.Dt, 0)
+	date, err := time.Parse(weatherDateTimeFormat, o.Current.Time)
+	if err != nil {
+		// TODO log warning about invalid timestamp
+	}
 	tz, err := time.LoadLocation(o.Timezone)
 	if err == nil {
 		date = date.In(tz)
@@ -115,116 +135,102 @@ func (o *openweatherResp) String() string {
 		// TODO log warning about invalid TZ, default to UTC
 	}
 
-	builder.WriteString(weatherCCs[o.Current.Weather[0].Id].icon)
+	builder.WriteString(weatherCCs[uint(o.Current.Weather_code)].icon)
 	// builder.WriteString(date.Format(" Mon 02.01 15:04:05 "))
 	builder.WriteString(date.Format(" Mon 02.01  "))
-	builder.WriteString(strconv.FormatInt(int64(o.Current.Temp), 10))
-	builder.WriteString("°C")
+	builder.WriteString(strconv.FormatInt(int64(o.Current.Temperature_2m), 10))
+	builder.WriteString(o.CurrentU.Temperature_2m)
 	builder.WriteRune('\n')
 
 	builder.WriteString("Humidity: ")
-	builder.WriteString(strconv.FormatFloat(float64(o.Current.Humidity), 'f', 0, 32))
+	builder.WriteString(strconv.FormatFloat(float64(o.Current.Relative_humidity_2m), 'f', 0, 32))
 	builder.WriteRune('%')
 	builder.WriteRune(' ')
-	if o.Current.Rain.OneHour != 0 {
-		builder.WriteString(" R:")
-		builder.WriteString(strconv.FormatFloat(float64(o.Current.Rain.OneHour), 'f', 1, 32))
-		builder.WriteString("mm")
+	// TODO split into rain and shower?
+	if o.Current.Precipitation != 0 {
+		builder.WriteString(" P:")
+		builder.WriteString(strconv.FormatFloat(float64(o.Current.Precipitation), 'f', 1, 32))
+		builder.WriteString(o.CurrentU.Precipitation)
 	}
-	if o.Current.Snow.OneHour != 0 {
+	if o.Current.Snowfall != 0 {
 		builder.WriteString(" S:")
-		builder.WriteString(strconv.FormatFloat(float64(o.Current.Snow.OneHour), 'f', 1, 32))
-		builder.WriteString("mm")
+		builder.WriteString(strconv.FormatFloat(float64(o.Current.Snowfall), 'f', 1, 32))
+		builder.WriteString(o.CurrentU.Snowfall)
 	}
 	builder.WriteRune('\n')
 
 	builder.WriteString("Clouds: ")
-	builder.WriteString(strconv.FormatFloat(float64(o.Current.Clouds), 'f', 0, 32))
-	builder.WriteRune('%')
+	builder.WriteString(strconv.FormatFloat(float64(o.Current.Cloud_cover), 'f', 0, 32))
+	builder.WriteString(o.CurrentU.Cloud_cover)
 	builder.WriteRune('\n')
 
-	builder.WriteString("UV:")
-	builder.WriteString(strconv.FormatFloat(float64(o.Current.Uvi), 'f', 1, 32))
-	builder.WriteString(" Wind: ")
-	builder.WriteString(strconv.FormatFloat(float64(o.Current.Wind_speed), 'f', 0, 32))
-	builder.WriteString("m/s ")
-	builder.WriteString(wind[int(math.Round(o.Current.WindDeg/360*float64(len(wind))))])
+	builder.WriteString("Wind: ")
+	builder.WriteString(strconv.FormatFloat(float64(o.Current.Wind_speed_10m), 'f', 0, 32))
+	builder.WriteString(o.CurrentU.Wind_speed_10m)
+	builder.WriteString(" ")
+	builder.WriteString(wind[int(math.Round(o.Current.Wind_direction_10m/360*float64(len(wind))))])
 	builder.WriteRune('\n')
 
 	// daily (max 7)
-	if len(o.Daily) > 0 {
-		builder.WriteRune('\n')
-		for i, d := range o.Daily {
-			if i >= 7 {
-				break
-			}
-			date := time.Unix(d.Dt, 0).In(tz)
-
-			builder.WriteString(weatherCCs[d.Weather[0].Id].icon)
-			builder.WriteString(date.Format(" Mon 02.01  "))
-			builder.WriteString(strconv.FormatFloat(float64(d.Temp.Min), 'f', 0, 32))
-			builder.WriteString("°C - ")
-			builder.WriteString(strconv.FormatFloat(float64(d.Temp.Max), 'f', 0, 32))
-			builder.WriteString("°C")
-			if d.Rain != 0 {
-				builder.WriteString(" R:")
-				builder.WriteString(strconv.FormatFloat(float64(d.Rain), 'f', 1, 32))
-				builder.WriteString("mm")
-			}
-			if d.Snow != 0 {
-				builder.WriteString(" S:")
-				builder.WriteString(strconv.FormatFloat(float64(d.Snow), 'f', 1, 32))
-				builder.WriteString("mm")
-			}
-			builder.WriteRune('\n')
+	builder.WriteRune('\n')
+	for i := 0; i < 7; i++ {
+		date, err := time.Parse(weatherDateTimeFormat, o.Daily.Time[i])
+		if err != nil {
+			// TODO log warning about invalid timestamp
 		}
+		date = date.In(tz)
+
+		builder.WriteString(weatherCCs[uint(o.Daily.Weather_code[i])].icon)
+		builder.WriteString(date.Format(" Mon 02.01  "))
+		builder.WriteString(strconv.FormatFloat(float64(o.Daily.Temperature_2m_min[i]), 'f', 0, 32))
+		builder.WriteString(o.DailyU.Temperature_2m_min)
+		builder.WriteString(" - ")
+		builder.WriteString(strconv.FormatFloat(float64(o.Daily.Temperature_2m_max[i]), 'f', 0, 32))
+		builder.WriteString(o.DailyU.Temperature_2m_max)
+		if len(o.Daily.Precipitation_sum) > i {
+			if o.Daily.Precipitation_sum[i] != 0 {
+				builder.WriteString(" R:")
+				builder.WriteString(strconv.FormatFloat(o.Daily.Precipitation_sum[i], 'f', 1, 32))
+				builder.WriteString(o.DailyU.Precipitation_sum)
+			}
+		}
+		if len(o.Daily.Snowfall_sum) > i {
+			if o.Daily.Snowfall_sum[i] != 0 {
+				builder.WriteString(" S:")
+				builder.WriteString(strconv.FormatFloat(o.Daily.Snowfall_sum[i], 'f', 1, 32))
+				builder.WriteString(o.DailyU.Snowfall_sum)
+			}
+		}
+		builder.WriteRune('\n')
 	}
 
 	// hourly (max 5)
-	if len(o.Hourly) > 0 {
+	builder.WriteRune('\n')
+	for i := 0; i < 5; i++ {
+		date, err := time.Parse(weatherDateTimeFormat, o.Hourly.Time[i])
+		if err != nil {
+			// TODO log warning about invalid timestamp
+		}
+		date = date.In(tz)
+
+		builder.WriteString(weatherCCs[uint(o.Hourly.Weather_code[i])].icon)
+		builder.WriteString(date.Format(" 15:04 02.01  "))
+		builder.WriteString(strconv.FormatFloat(float64(o.Hourly.Temperature_2m[i]), 'f', 0, 32))
+		builder.WriteString(o.HourlyU.Temperature_2m)
+		if o.Hourly.Precipitation[i] != 0 {
+			builder.WriteString(" R:")
+			builder.WriteString(strconv.FormatFloat(o.Hourly.Precipitation[i], 'f', 1, 32))
+			builder.WriteString(o.HourlyU.Precipitation)
+		}
+		if o.Hourly.Snowfall[i] != 0 {
+			builder.WriteString(" S:")
+			builder.WriteString(strconv.FormatFloat(o.Hourly.Snowfall[i], 'f', 1, 32))
+			builder.WriteString(o.HourlyU.Snowfall)
+		}
 		builder.WriteRune('\n')
-		for i, h := range o.Hourly {
-			if i >= 5 {
-				break
-			}
-			date := time.Unix(h.Dt, 0).In(tz)
-
-			builder.WriteString(weatherCCs[h.Weather[0].Id].icon)
-			builder.WriteString(date.Format(" 15:04 02.01  "))
-			builder.WriteString(strconv.FormatFloat(float64(h.Temp), 'f', 0, 32))
-			builder.WriteString("°C")
-			if h.Rain.OneHour != 0 {
-				builder.WriteString(" R:")
-				builder.WriteString(strconv.FormatFloat(float64(h.Rain.OneHour), 'f', 1, 32))
-				builder.WriteString("mm")
-			}
-			if h.Snow.OneHour != 0 {
-				builder.WriteString(" S:")
-				builder.WriteString(strconv.FormatFloat(float64(h.Snow.OneHour), 'f', 1, 32))
-				builder.WriteString("mm")
-			}
-			builder.WriteRune('\n')
-		}
-	}
-
-	if len(o.Alerts) > 0 {
-		for _, a := range o.Alerts {
-			builder.WriteRune('\n')
-			sDate := time.Unix(a.Start, 0).In(tz)
-			eDate := time.Unix(a.End, 0).In(tz)
-
-			builder.WriteString("Wetterwarnung")
-			builder.WriteString(sDate.Format(" (15:04 02.01 - "))
-			builder.WriteString(eDate.Format("15:04 02.01):"))
-			builder.WriteRune('\n')
-			builder.WriteString(a.Description)
-			builder.WriteString("\nQuelle: ")
-			builder.WriteString(a.SenderName)
-			builder.WriteRune('\n')
-		}
 	}
 
 	builder.WriteRune('\n')
-	builder.WriteString("Quelle: openweather")
+	builder.WriteString("Quelle: open-meteo.com")
 	return builder.String()
 }

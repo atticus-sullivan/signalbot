@@ -35,36 +35,25 @@ var (
 // fetches stuff. (e.g. if caching might be implemented at this level)
 // data members are only public to be able to (un)marshal them
 type Fetcher struct {
-	ApiKey     string `yaml:"openweatherKey"`
-	Lang       string `yaml:"lang"`
-	Unitsystem string `yaml:"unitsystem"`
 }
 
 // validate the fetcher
 func (f *Fetcher) Validate() error {
-	if v, ok := langs[f.Lang]; !ok || !v {
-		return ErrLang
-	}
-	if f.Unitsystem != "metric" && f.Unitsystem != "imperial" && f.Unitsystem != "standard" {
-		return ErrUnit
-	}
-	if len(f.ApiKey) != 32 {
-		return ErrKey
-	}
 	return nil
 }
 
 // get the content from the internet
-const baseUrl string = "https://api.openweathermap.org/data/2.5/onecall?"
+const baseUrl string = "https://api.open-meteo.com/v1/forecast?"
 
 func (f *Fetcher) getReader(loc Position) (io.ReadCloser, error) {
 	params := url.Values{
-		"exclude": {"minutely"},
-		"appid":   {f.ApiKey},
-		"lat":     {strconv.FormatFloat(float64(loc.Lat), 'f', 4, 32)},
-		"lon":     {strconv.FormatFloat(float64(loc.Lon), 'f', 4, 32)},
-		"units":   {f.Unitsystem},
-		"lang":    {f.Lang},
+		"latitude":     {strconv.FormatFloat(float64(loc.Lat), 'f', 6, 32)},
+		"longitude":     {strconv.FormatFloat(float64(loc.Lon), 'f', 6, 32)},
+		"daily": {"temperature_2m_max", "temperature_2m_min", "precipitation_sum", "weather_code", "sunshine_duration", "wind_speed_10m_max", "wind_direction_10m_dominant", "uv_index_max"},
+		"hourly": {"temperature_2m", "precipitation", "snowfall", "weather_code"},
+		"current": {"temperature_2m", "relative_humidity_2m", "dew_point_2m", "cloud_cover", "wind_speed_10m", "wind_direction_10m", "wind_gusts_10m", "precipitation", "precipitation_probability", "snowfall", "weather_code"},
+		"forecast_days": {"7"},
+		"forecast_hours": {"5"},
 	}
 	resp, err := http.Get(baseUrl + params.Encode())
 	if err != nil {
@@ -78,9 +67,9 @@ func (f *Fetcher) getReader(loc Position) (io.ReadCloser, error) {
 
 // parse the content from an arbitrary reader (can be a file, a network
 // response body or something else)
-func (f *Fetcher) getFromReader(r io.ReadCloser) (*openweatherResp, error) {
+func (f *Fetcher) getFromReader(r io.ReadCloser) (*weatherResp, error) {
 	d := json.NewDecoder(r)
-	resp := &openweatherResp{}
+	resp := &weatherResp{}
 	err := d.Decode(resp)
 	if err != nil {
 		panic(err)
