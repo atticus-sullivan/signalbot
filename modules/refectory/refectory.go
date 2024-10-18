@@ -72,6 +72,13 @@ func newRefectoryWithFetcher[U FetcherReadCloser, T FetcherInter[U]](log *slog.L
 		r.Aliases[ref] = []string{ref}
 	}
 
+
+	// all aliases are lowercase
+	for al, ref := range r.Aliases {
+		delete(r.Aliases, al)
+		r.Aliases[strings.ToLower(al)] = ref
+	}
+
 	// validation
 	if err := r.Validate(); err != nil {
 		return nil, err
@@ -123,6 +130,8 @@ func (r *Refectory[U,T]) Handle(m *signalcli.Message, signal signalsender.Signal
 
 	date := time.Now().Add(time.Hour * 24 * time.Duration(args.When))
 	date = time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
+
+	args.Where = strings.ToLower(args.Where)
 
 	resolvedL, ok := r.Aliases[args.Where]
 	if !ok {
