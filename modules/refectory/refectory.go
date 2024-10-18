@@ -23,6 +23,8 @@ import (
 	"signalbot_go/internal/signalsender"
 	"signalbot_go/modules"
 	"signalbot_go/signalcli"
+	"sort"
+	"strings"
 	"time"
 
 	"log/slog"
@@ -126,7 +128,17 @@ func (r *Refectory[U,T]) Handle(m *signalcli.Message, signal signalsender.Signal
 	if !ok {
 		errMsg := fmt.Sprintf("Error: %v is unknown", args.Where)
 		r.Log.Error(errMsg)
-		r.SendError(m, signal, errMsg)
+		builder := strings.Builder{}
+		builder.WriteString(errMsg)
+		builder.WriteRune('\n')
+		builder.WriteString("Available refectories: ")
+		sorted := make(sort.StringSlice, 0, len(r.Aliases))
+		for k := range r.Aliases {
+			sorted = append(sorted, k)
+		}
+		sorted.Sort()
+		builder.WriteString(strings.Join(sorted, ", "))
+		r.SendError(m, signal, builder.String())
 		return
 	}
 
