@@ -37,6 +37,12 @@ type Vox struct {
 	ScraperBase
 }
 
+func NewVox(base ScraperBase) *Vox {
+	return &Vox{
+		ScraperBase: base,
+	}
+}
+
 func (s *Vox) Get(now time.Time) (io.ReadCloser, error) {
 	url := "https://www.vox.de/fernsehprogramm/" + now.Format("2006-01-02")
 	return s.ScraperBase.Get(url)

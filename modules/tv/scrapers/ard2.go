@@ -31,6 +31,13 @@ type Ard2 struct {
 	Url string
 }
 
+func NewArd2(base ScraperBase, url string) *Ard2 {
+	return &Ard2{
+		ScraperBase: base,
+		Url: url,
+	}
+}
+
 func (s *Ard2) Get(now time.Time) (io.ReadCloser, error) {
 	// url := fmt.Sprintf(s.Url, now.Format("02.01.2006"))
 	url := s.Url

@@ -41,6 +41,13 @@ type SatEins struct {
 	Url string
 }
 
+func NewSatEins(base ScraperBase, url string) *SatEins {
+	return &SatEins{
+		ScraperBase: base,
+		Url: url,
+	}
+}
+
 func (s *SatEins) Get(time.Time) (io.ReadCloser, error) {
 	return s.ScraperBase.Get(s.Url)
 }

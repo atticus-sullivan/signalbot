@@ -36,6 +36,12 @@ type Rtl struct {
 	ScraperBase
 }
 
+func NewRtl(base ScraperBase) *Rtl {
+	return &Rtl{
+		ScraperBase: base,
+	}
+}
+
 func (s *Rtl) Get(time.Time) (io.ReadCloser, error) {
 	url := "https://www.rtl.de/fernsehprogramm/" + time.Now().Format("2006-01-02")
 	return s.ScraperBase.Get(url)
