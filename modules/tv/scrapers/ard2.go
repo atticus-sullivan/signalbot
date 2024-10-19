@@ -32,7 +32,8 @@ type Ard2 struct {
 }
 
 func (s *Ard2) Get(now time.Time) (io.ReadCloser, error) {
-	url := fmt.Sprintf(s.Url, now.Format("02.01.2006"))
+	// url := fmt.Sprintf(s.Url, now.Format("02.01.2006"))
+	url := s.Url
 	return s.ScraperBase.Get(url)
 }
 
@@ -71,9 +72,19 @@ func (s *Ard2) Parse(r io.ReadCloser, ret chan<- show.Show, now time.Time) {
 				continue
 			}
 			seen[j.Id] = struct{}{}
+
+			var name string
+			j.Subline = strings.TrimSpace(j.Subline)
+			j.Title = strings.TrimSpace(j.Title)
+			if j.Subline != "" {
+				name = fmt.Sprintf("%s -- %s", j.Title, j.Subline)
+			} else {
+				name = j.Title
+			}
+
 			ret <- show.Show{
 				Date: j.BroadcastedOn,
-				Name: fmt.Sprintf("%s -- %s", strings.TrimSpace(j.Title), strings.TrimSpace(j.Subline)),
+				Name: name,
 			}
 		}
 	}

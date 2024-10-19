@@ -162,6 +162,14 @@ collect:
 			i = 14
 		case ele, ok = <-channels[15]:
 			i = 15
+		case ele, ok = <-channels[16]:
+			i = 16
+		case ele, ok = <-channels[17]:
+			i = 17
+		case ele, ok = <-channels[18]:
+			i = 18
+		case ele, ok = <-channels[19]:
+			i = 19
 		}
 		if ok {
 			sender := fetcher.senderScrapers[i].Name()
