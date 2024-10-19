@@ -2,17 +2,17 @@ package scrapers_test
 
 // signalbot
 // Copyright (C) 2024  Lukas Heindl
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -27,12 +27,12 @@ import (
 func TestArd2_br(t *testing.T) {
 	log := nopLog()
 
-	scraper := &scrapers.Ard2{ScraperBase: scrapers.NewScraperBase(log, "br", location), Url: "https://programm.ard.de/TV/Programm/Sender?sender=-28107&datum=%s&hour=0&archiv=1"}
+	scraper := &scrapers.Ard2{ScraperBase: scrapers.NewScraperBase(log, "arte", location), Url: "https://programm-api.ard.de/program/api/program?mode=channel&channelIds=arte"}
 
 	channel := make(chan show.Show)
 	now := time.Date(2023, 4, 19, 0, 0, 0, 0, location)
 
-	resp, err := os.Open("ard2-br_test.html")
+	resp, err := os.Open("ard2_test.json")
 	if err != nil {
 		panic(err)
 	}
@@ -47,170 +47,121 @@ func TestArd2_br(t *testing.T) {
 	}
 
 	sendings := []show.Show{
-		// 0
 		{
-			Date: time.Date(2023, 4, 19, 6, 0, 0, 0, location),
-			Name: "Dahoam is Dahoam (3140) · Erhitzte Gemüter",
+			Date: time.Date(2024, 10, 19, 5, 30, 0, 0, location),
+			Name: "Unesco-Weltkulturerbe - Schätze für die Ewigkeit -- Granada",
 		},
-		// 1
 		{
-			Date: time.Date(2023, 4, 19, 6, 30, 0, 0, location),
-			Name: "Sturm der Liebe (4014) Der Antrag",
+			Date: time.Date(2024, 10, 19, 6, 20, 0, 0, location),
+			Name: "Gaudi - Architekt der Moderne in Barcelona -- Frankreich 2022",
 		},
-		// 2
 		{
-			Date: time.Date(2023, 4, 19, 7, 20, 0, 0, location),
-			Name: "Tele-Gym Integrales Qi Gong",
+			Date: time.Date(2024, 10, 19, 7, 15, 0, 0, location),
+			Name: "360° Reportage -- La Réunion: Die Wiederbelebung der kreolischen Gärten",
 		},
-		// 3
 		{
-			Date: time.Date(2023, 4, 19, 7, 35, 0, 0, location),
-			Name: "Panoramabilder/Bergwetter mit Nachrichten aus dem Bayerntext",
+			Date: time.Date(2024, 10, 19, 7, 50, 0, 0, location),
+			Name: "Geo Reportage -- Yoga, Indiens erstaunliche Medizin",
 		},
-		// 4
 		{
-			Date: time.Date(2023, 4, 19, 8, 40, 0, 0, location),
-			Name: "Tele-Gym Schlank, Fit & Gesund",
+			Date: time.Date(2024, 10, 19, 8, 45, 0, 0, location),
+			Name: "GEO Reportage -- Die blinde Primaballerina von Sao Paulo",
 		},
-		// 5
 		{
-			Date: time.Date(2023, 4, 19, 8, 55, 0, 0, location),
-			Name: "Panoramabilder/Bergwetter mit Nachrichten aus dem Bayerntext",
+			Date: time.Date(2024, 10, 19, 9, 40, 0, 0, location),
+			Name: "Stadt Land Kunst Spezial -- Kenia",
 		},
-		// 6
 		{
-			Date: time.Date(2023, 4, 19, 9, 10, 0, 0, location),
-			Name: "Eisbär, Affe & Co Zoogeschichten aus Stuttgart",
+			Date: time.Date(2024, 10, 19, 10, 20, 0, 0, location),
+			Name: "Stadt Land Kunst Spezial -- Martinique",
 		},
-		// 7
 		{
-			Date: time.Date(2023, 4, 19, 10, 0, 0, 0, location),
-			Name: "Giraffe, Erdmännchen & Co Zoogeschichten aus Frankfurt und Kronberg",
+			Date: time.Date(2024, 10, 19, 11, 0, 0, 0, location),
+			Name: "Zu Tisch -- Garfagnana, Italien",
 		},
-		// 8
 		{
-			Date: time.Date(2023, 4, 19, 10, 50, 0, 0, location),
-			Name: "Welt der Tiere Igel unter uns",
+			Date: time.Date(2024, 10, 19, 11, 25, 0, 0, location),
+			Name: "Im Bauch von Ljubljana -- Der Zentralmarkt",
 		},
-		// 9
 		{
-			Date: time.Date(2023, 4, 19, 11, 20, 0, 0, location),
-			Name: "Abenteuer Wildnis Die Leopardin - Gejagte Jägerin",
+			Date: time.Date(2024, 10, 19, 12, 20, 0, 0, location),
+			Name: "Wasserlöcher - Oasen für Afrikas Fauna (1/3) -- Großbritannien 2020",
 		},
-		// 10
 		{
-			Date: time.Date(2023, 4, 19, 12, 5, 0, 0, location),
-			Name: "nah und fern Tabernas | Großer Falkenstein | Zukunftsmuseum Nürnberg",
+			Date: time.Date(2024, 10, 19, 13, 5, 0, 0, location),
+			Name: "Wasserlöcher - Oasen für Afrikas Fauna (2/3) -- Großbritannien 2020",
 		},
-		// 11
 		{
-			Date: time.Date(2023, 4, 19, 12, 35, 0, 0, location),
-			Name: "Gefragt - Gejagt Moderation: Alexander Bommes",
+			Date: time.Date(2024, 10, 19, 13, 50, 0, 0, location),
+			Name: "Wasserlöcher - Oasen für Afrikas Fauna (3/3) -- Großbritannien 2020",
 		},
-		// 12
 		{
-			Date: time.Date(2023, 4, 19, 13, 20, 0, 0, location),
-			Name: "Quizduell-Olymp Moderation: Esther Sedlaczek",
+			Date: time.Date(2024, 10, 19, 14, 35, 0, 0, location),
+			Name: "Pompeji, Geschichte einer Katastrophe (1/3) -- Im Schatten des Vesuv",
 		},
-		// 13
 		{
-			Date: time.Date(2023, 4, 19, 14, 10, 0, 0, location),
-			Name: "aktiv und gesund",
+			Date: time.Date(2024, 10, 19, 15, 30, 0, 0, location),
+			Name: "Pompeji, Geschichte einer Katastrophe (2/3) -- Flucht und Neuanfang",
 		},
-		// 14
 		{
-			Date: time.Date(2023, 4, 19, 14, 40, 0, 0, location),
-			Name: "Nashorn, Zebra & Co Zoogeschichten aus München",
+			Date: time.Date(2024, 10, 19, 16, 30, 0, 0, location),
+			Name: "Pompeji, Geschichte einer Katastrophe (3/3) -- Die letzten Stunden",
 		},
-		// 15
 		{
-			Date: time.Date(2023, 4, 19, 15, 30, 0, 0, location),
-			Name: "Schnittgut. Alles aus dem Garten",
+			Date: time.Date(2024, 10, 19, 17, 25, 0, 0, location),
+			Name: "ARTE Reportage -- Libanon / Israel",
 		},
-		// 16
 		{
-			Date: time.Date(2023, 4, 19, 16, 0, 0, 0, location),
-			Name: "BR24 Nachrichten - Berichte - Wettervorhersage",
+			Date: time.Date(2024, 10, 19, 18, 20, 0, 0, location),
+			Name: "Mit offenen Karten -- Elektroautops - Wer stoppt China?",
 		},
-		// 17
 		{
-			Date: time.Date(2023, 4, 19, 16, 15, 0, 0, location),
-			Name: "Wir in Bayern · Lust auf Heimat",
+			Date: time.Date(2024, 10, 19, 18, 35, 0, 0, location),
+			Name: "Die letzten Venezianer -- Italien 2021",
 		},
-		// 18
 		{
-			Date: time.Date(2023, 4, 19, 17, 30, 0, 0, location),
-			Name: "Regionalprogramm Frankenschau aktuell (BR Nord) | Abendschau - Der Süden (BFS Süd)",
+			Date: time.Date(2024, 10, 19, 19, 20, 0, 0, location),
+			Name: "ARTE Journal -- Die Abendausgabe des europäischen Nachrichtenmagazins",
 		},
-		// 19
 		{
-			Date: time.Date(2023, 4, 19, 18, 0, 0, 0, location),
-			Name: "Abendschau · Das bewegt Bayern heute",
+			Date: time.Date(2024, 10, 19, 19, 40, 0, 0, location),
+			Name: "360° Reportage -- Mongolei: Der Pferderetter",
 		},
-		// 20
 		{
-			Date: time.Date(2023, 4, 19, 18, 30, 0, 0, location),
-			Name: "BR24 Nachrichten - Berichte - Wettervorhersage",
+			Date: time.Date(2024, 10, 19, 20, 15, 0, 0, location),
+			Name: "Sardinien - Das Rätsel der Nuraghen-Türme -- Frankreich 2024",
 		},
-		// 21
 		{
-			Date: time.Date(2023, 4, 19, 19, 0, 0, 0, location),
-			Name: "STATIONEN Teufel, komm raus!",
+			Date: time.Date(2024, 10, 19, 21, 45, 0, 0, location),
+			Name: "Superfood Bohnen -- Deutschland 2024",
 		},
-		// 22
 		{
-			Date: time.Date(2023, 4, 19, 19, 30, 0, 0, location),
-			Name: "Dahoam is Dahoam (3141) Für meine Tochter nur das Beste",
+			Date: time.Date(2024, 10, 19, 22, 40, 0, 0, location),
+			Name: "Unser Bauch - Die wunderbare Welt des Mikrobioms -- Frankreich 2019",
 		},
-		// 23
 		{
-			Date: time.Date(2023, 4, 19, 20, 0, 0, 0, location),
-			Name: "Tagesschau",
+			Date: time.Date(2024, 10, 19, 23, 40, 0, 0, location),
+			Name: "Muss Wohnen so teuer sein? -- 42 - Die Antwort auf fast alles",
 		},
-		// 24
 		{
-			Date: time.Date(2023, 4, 19, 20, 15, 0, 0, location),
-			Name: "Münchner Runde Freizeit statt Karriere – Lohnt sich Leistung noch?",
+			Date: time.Date(2024, 10, 20, 0, 10, 0, 0, location),
+			Name: "Kurzschluss -- Schwer verliebt",
 		},
-		// 25
 		{
-			Date: time.Date(2023, 4, 19, 21, 15, 0, 0, location),
-			Name: "Kontrovers Moderation: Ursula Heller",
+			Date: time.Date(2024, 10, 20, 1, 5, 0, 0, location),
+			Name: "Antoine und Colette -- Spielfilm Frankreich 1961",
 		},
-		// 26
 		{
-			Date: time.Date(2023, 4, 19, 21, 45, 0, 0, location),
-			Name: "BR24 Nachrichten - Berichte - Wettervorhersage",
+			Date: time.Date(2024, 10, 20, 1, 40, 0, 0, location),
+			Name: "Sonnenstürme - Die rätselhafte Gefahr -- Deutschland 2020",
 		},
-		// 27
 		{
-			Date: time.Date(2023, 4, 19, 22, 0, 0, 0, location),
-			Name: "DokThema Deutschland schaltet ab - Der Atomausstieg und die Folgen",
+			Date: time.Date(2024, 10, 20, 2, 30, 0, 0, location),
+			Name: "Verschollene Filmschätze -- 1938. Chamberlains Treffen mit Hitler",
 		},
-		// 27
 		{
-			Date: time.Date(2023, 4, 19, 22, 45, 0, 0, location),
-			Name: "Wim Wenders, Desperado",
-		},
-		// 28
-		{
-			Date: time.Date(2023, 4, 19, 0, 45, 0, 0, location),
-			Name: "kinokino",
-		},
-		// 29
-		{
-			Date: time.Date(2023, 4, 19, 1, 0, 0, 0, location),
-			Name: "Am Ende der Gewalt Spielfilm Frankreich/Deutschland/USA 1997",
-		},
-		// 30
-		{
-			Date: time.Date(2023, 4, 19, 2, 55, 0, 0, location),
-			Name: "Land of Plenty Spielfilm Deutschland/USA 2003",
-		},
-		// 31
-		{
-			Date: time.Date(2023, 4, 19, 4, 55, 0, 0, location),
-			Name: "Abendschau Das bewegt Bayern heute",
+			Date: time.Date(2024, 10, 20, 3, 0, 0, 0, location),
+			Name: "28 Minuten -- Frankreich 2024",
 		},
 	}
 
@@ -218,33 +169,13 @@ func TestArd2_br(t *testing.T) {
 		t.Fatalf("Wrong amount of shows read. %d (should: %d)", len(ss), len(sendings))
 	}
 
-	s := ss[0]
-	s_ref := sendings[0]
-
-	if s.Name != s_ref.Name {
-		t.Fatalf("Wrong name. %s (should: %s)", s.Name, s_ref.Name)
-	}
-	if !s.Date.Equal(s_ref.Date) {
-		t.Fatalf("Wrong date. %v (should: %v)", s.Date, s_ref.Date)
-	}
-
-	s = ss[17]
-	s_ref = sendings[17]
-
-	if s.Name != s_ref.Name {
-		t.Fatalf("Wrong name. %s (should: %s)", s.Name, s_ref.Name)
-	}
-	if !s.Date.Equal(s_ref.Date) {
-		t.Fatalf("Wrong date. %v (should: %v)", s.Date, s_ref.Date)
-	}
-
-	s = ss[19]
-	s_ref = sendings[19]
-
-	if s.Name != s_ref.Name {
-		t.Fatalf("Wrong name. %s (should: %s)", s.Name, s_ref.Name)
-	}
-	if !s.Date.Equal(s_ref.Date) {
-		t.Fatalf("Wrong date. %v (should: %v)", s.Date, s_ref.Date)
+	for i, s := range ss {
+		s_ref := sendings[i]
+		if s.Name != s_ref.Name {
+			t.Fatalf("Wrong name. %s (should: %s)", s.Name, s_ref.Name)
+		}
+		if !s.Date.Equal(s_ref.Date) {
+			t.Fatalf("Wrong date. %v (should: %v)", s.Date, s_ref.Date)
+		}
 	}
 }

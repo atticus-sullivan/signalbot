@@ -24,7 +24,7 @@ import (
 )
 
 func nopLog() *slog.Logger {
-	return slog.New(slog.HandlerOptions{Level: slog.LevelError}.NewTextHandler(io.Discard))
+	return slog.New(slog.NewTextHandler(io.Discard, &slog.HandlerOptions{Level: slog.LevelError}))
 }
 
 func loadZone() *time.Location {
