@@ -37,17 +37,16 @@ func (s *Ard2) Get(now time.Time) (io.ReadCloser, error) {
 }
 
 type resp struct {
-	Channels []struct{
-		Id string
-		TimeSlots [][]struct{
-			Id string
-			Title string
-			Subline string
+	Channels []struct {
+		Id        string
+		TimeSlots [][]struct {
+			Id            string
+			Title         string
+			Subline       string
 			BroadcastedOn time.Time
 		}
 	}
 }
-
 
 func (s *Ard2) Parse(r io.ReadCloser, ret chan<- show.Show, now time.Time) {
 	defer close(ret)
