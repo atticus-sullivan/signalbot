@@ -25,10 +25,15 @@ import (
 	"errors"
 	"log/slog"
 	"net"
+	"strings"
 
 	"signalbot_go/signalcli"
 
 	"golang.org/x/exp/jsonrpc2"
+)
+
+var (
+	ErrMsgUnset = errors.New("Message unset")
 )
 
 type SignalCliDriver struct {
@@ -71,19 +76,40 @@ func (d *SignalCliDriver) Handle(ctx context.Context, req *jsonrpc2.Request) (in
 
 	err := dec.Decode(&rcv)
 	if err != nil {
-		d.log.Warn("Decoding jsonRpc message params failed", "rpc params", hex.EncodeToString(req.Params))
+		d.log.Warn("Decoding jsonRpc message params failed", "rpc params", strings.ReplaceAll(string(req.Params), "\"", "|"))
 		return nil, jsonrpc2.ErrNotHandled
 	}
 
-	if rcv.Envelope.SyncMessage != nil {
+	if rcv.Exception != nil {
+		// ignore
+	} else if rcv.Envelope.TypingMessage != nil {
+		// ignore
+	} else if rcv.Envelope.ReceiptMessage != nil {
+		// ignore
+	} else if rcv.Envelope.SyncMessage != nil {
 		m,err := NewSyncMessage(&rcv, d.selfNr)
 		if err != nil {
-			d.log.Warn("Error parsing message", "err", err, "msg", hex.EncodeToString(req.Params))
+			switch err {
+			case ErrMsgUnset:
+			default:
+				d.log.Warn("Error parsing message", "err", err, "method", req.Method, "msg", strings.ReplaceAll(string(req.Params), "\"", "|"))
+			}
 		} else {
 			d.driverInter.SyncMessageChan <- m
 		}
+	} else if rcv.Envelope.DataMessage != nil {
+		m,err := NewDataMessage(&rcv, d.selfNr)
+		if err != nil {
+			switch err {
+			case ErrMsgUnset:
+			default:
+				d.log.Warn("Error parsing message", "err", err, "method", req.Method, "msg", strings.ReplaceAll(string(req.Params), "\"", "|"))
+			}
+		} else {
+			d.driverInter.MessageChan <- m
+		}
 	} else {
-		d.log.Warn("Message is no sync message", "rpc params", hex.EncodeToString(req.Params))
+		d.log.Warn("Unknown message type", "rpc params", strings.ReplaceAll(string(req.Params), "\"", "|"))
 	}
 
 	return nil, jsonrpc2.ErrNotHandled
@@ -127,7 +153,7 @@ func NewSyncMessage(v *jsonReceive, self string) (*signalcli.SyncMessage, error)
 	// 	return nil, errors.New("Destination unset")
 	// }
 	if msg.Message.Message == "" {
-		return nil, errors.New("Message unset")
+		return nil, ErrMsgUnset
 	}
 
 	// fill chat
@@ -143,25 +169,40 @@ func NewSyncMessage(v *jsonReceive, self string) (*signalcli.SyncMessage, error)
 	return &msg, nil
 }
 
-// func NewMessage(v *dbus.Signal, self string) *signalcli.Message {
-// 	msg := signalcli.Message{
-// 		Timestamp:   v.Body[0].(int64),
-// 		Sender:      v.Body[1].(string),
-// 		GroupId:     v.Body[2].([]byte),
-// 		Message:     v.Body[3].(string),
-// 		Attachments: v.Body[4].([]string),
-// 	}
-// 	msg.Receiver = self
-//
-// 	// fill chat
-// 	if len(msg.GroupId) > 0 {
-// 		msg.Chat = hex.EncodeToString(msg.GroupId)
-// 	} else {
-// 		if msg.Sender == self {
-// 			msg.Chat = msg.Receiver
-// 		}
-// 		msg.Chat = msg.Sender
-// 	}
-//
-// 	return &msg
-// }
+func NewDataMessage(v *jsonReceive, self string) (*signalcli.Message,error) {
+	msg := signalcli.Message{
+		Timestamp:   int64(v.Envelope.DataMessage.Timestamp),
+		Sender:      v.Envelope.Source,
+		Message:     v.Envelope.DataMessage.Message,
+	}
+	if len(v.Envelope.DataMessage.GroupInfo.GroupId) > 0 {
+		gid,err := base64.StdEncoding.DecodeString(v.Envelope.DataMessage.GroupInfo.GroupId)
+		if err != nil {
+			return nil, err
+		}
+		msg.GroupId = gid
+	}
+	msg.Receiver = self
+
+	if msg.Sender == "" {
+		return nil, errors.New("Sender unset")
+	}
+	// if msg.Destination == "" {
+	// 	return nil, errors.New("Destination unset")
+	// }
+	if msg.Message == "" {
+		return nil, ErrMsgUnset
+	}
+
+	// fill chat
+	if len(msg.GroupId) > 0 {
+		msg.Chat = hex.EncodeToString(msg.GroupId)
+	} else {
+		if msg.Sender == self {
+			msg.Chat = msg.Receiver
+		}
+		msg.Chat = msg.Sender
+	}
+
+	return &msg, nil
+}

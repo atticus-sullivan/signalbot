@@ -6,7 +6,7 @@ import (
 )
 
 type sendResult struct {
-	Results []string
+	// Results []string
 	Timestamp int64
 }
 
