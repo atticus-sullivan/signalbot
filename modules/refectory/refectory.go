@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 	"signalbot_go/internal/signalsender"
+	cmdsplit "signalbot_go/internal/cmdSplit"
 	"signalbot_go/modules"
 	"signalbot_go/signalcli"
 	"sort"
@@ -106,7 +107,7 @@ func (r *Refectory[U,T]) Validate() error {
 // specifies the arguments when handling a request to this module
 type Args struct {
 	Where string `arg:"positional"`
-	When  int    `arg:"-d,--day" default:"0"`
+	When  string `arg:"-d,--day" default:"0"`
 	Quiet bool   `arg:"-q,--quiet" default:"false"`
 }
 
@@ -128,61 +129,70 @@ func (r *Refectory[U,T]) Handle(m *signalcli.Message, signal signalsender.Signal
 		return
 	}
 
-	date := time.Now().Add(time.Hour * 24 * time.Duration(args.When))
-	date = time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
-
-	args.Where = strings.ToLower(args.Where)
-
-	resolvedL, ok := r.Aliases[args.Where]
-	if !ok {
-		errMsg := fmt.Sprintf("Error: %v is unknown", args.Where)
-		r.Log.Error(errMsg)
-		builder := strings.Builder{}
-		builder.WriteString(errMsg)
-		builder.WriteRune('\n')
-		builder.WriteString("Available refectories: ")
-		sorted := make(sort.StringSlice, 0, len(r.Aliases))
-		for k := range r.Aliases {
-			sorted = append(sorted, k)
-		}
-		sorted.Sort()
-		builder.WriteString(strings.Join(sorted, ", "))
-		r.SendError(m, signal, builder.String())
+	days, err := cmdsplit.ParseNumberRange(args.When)
+	if err != nil {
+		errMsg := err.Error()
+		r.Log.Warn(errMsg)
+		r.SendError(m, signal, errMsg)
 		return
 	}
+	for _, when := range days {
+		date := time.Now().Add(time.Hour * 24 * time.Duration(when))
+		date = time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
 
-	for _, ref := range resolvedL {
-		// execute the query
-		reader, err := r.fetcher.getReader(r.Refectories[ref], date)
-		if err != nil {
-			var errMsg string
-			if err == ErrNotOpenThatDay {
-				errMsg = err.Error()
-			} else {
-				errMsg = fmt.Sprintf("Error: %v", err)
-			}
+		args.Where = strings.ToLower(args.Where)
+
+		resolvedL, ok := r.Aliases[args.Where]
+		if !ok {
+			errMsg := fmt.Sprintf("Error: %v is unknown", args.Where)
 			r.Log.Error(errMsg)
-			if !args.Quiet || err != ErrNotOpenThatDay {
+			builder := strings.Builder{}
+			builder.WriteString(errMsg)
+			builder.WriteRune('\n')
+			builder.WriteString("Available refectories: ")
+			sorted := make(sort.StringSlice, 0, len(r.Aliases))
+			for k := range r.Aliases {
+				sorted = append(sorted, k)
+			}
+			sorted.Sort()
+			builder.WriteString(strings.Join(sorted, ", "))
+			r.SendError(m, signal, builder.String())
+			continue
+		}
+
+		for _, ref := range resolvedL {
+			// execute the query
+			reader, err := r.fetcher.getReader(r.Refectories[ref], date)
+			if err != nil {
+				var errMsg string
+				if err == ErrNotOpenThatDay {
+					errMsg = err.Error()
+				} else {
+					errMsg = fmt.Sprintf("Error: %v", err)
+				}
+				r.Log.Error(errMsg)
+				if !args.Quiet || err != ErrNotOpenThatDay {
+					r.SendError(m, signal, errMsg)
+				}
+				continue
+			}
+			defer reader.Close()
+			menu, err := r.fetcher.getFromReader(reader)
+			if err != nil {
+				errMsg := fmt.Sprintf("Error: %v", err)
+				r.Log.Error(errMsg)
 				r.SendError(m, signal, errMsg)
+				continue
 			}
-			continue
-		}
-		defer reader.Close()
-		menu, err := r.fetcher.getFromReader(reader)
-		if err != nil {
-			errMsg := fmt.Sprintf("Error: %v", err)
-			r.Log.Error(errMsg)
-			r.SendError(m, signal, errMsg)
-			continue
-		}
-		// respond
-		menuS := fmt.Sprintf("%s on %s\n", ref, date.Format("Mon 2006-01-02")) + menu.String()
-		_, err = signal.Respond(menuS, []string{}, m, true)
-		if err != nil {
-			errMsg := fmt.Sprintf("Error: %v", err)
-			r.Log.Error(errMsg)
-			r.SendError(m, signal, errMsg)
-			continue
+			// respond
+			menuS := fmt.Sprintf("%s on %s\n", ref, date.Format("Mon 2006-01-02")) + menu.String()
+			_, err = signal.Respond(menuS, []string{}, m, true)
+			if err != nil {
+				errMsg := fmt.Sprintf("Error: %v", err)
+				r.Log.Error(errMsg)
+				r.SendError(m, signal, errMsg)
+				continue
+			}
 		}
 	}
 }
