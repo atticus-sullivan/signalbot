@@ -159,7 +159,7 @@ func (r *News) Handle(m *signalcli.Message, signal signalsender.SignalSender, vi
 
 	_, err = signal.Respond(resp, []string{}, m, true)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error: %v", err)
+		errMsg := fmt.Sprintf("Error responding: %v", err)
 		r.Log.Error(errMsg)
 		r.SendError(m, signal, errMsg)
 		return

@@ -15,6 +15,7 @@ func (d *SignalCliDriver) SendMessage(message string, attachments []string, reci
 	var result sendResult
 	err = d.conn.Call(ctx, "send", map[string]any{"recipient": recipient, "message": message, "attachments": attachments, "notifySelf": notifySelf}).Await(ctx, &result)
 	if err != nil {
+		d.log.Error("error sending message", "err", err)
 		return 0, err
 	}
 	return result.Timestamp, nil
@@ -26,6 +27,7 @@ func (d *SignalCliDriver) SendGroupMessage(message string, attachments []string,
 	var result sendResult
 	err = d.conn.Call(ctx, "send", map[string]any{"groupId": gid, "message": message, "attachments": attachments}).Await(ctx, &result)
 	if err != nil {
+		d.log.Error("error sending group message", "err", err, "gid", gid, "res", result)
 		return 0, err
 	}
 	return result.Timestamp, nil

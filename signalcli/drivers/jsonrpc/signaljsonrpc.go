@@ -48,6 +48,7 @@ func NewSignalJsonRpcDriver(log *slog.Logger, unixSocket string, selfNr string) 
 
 	ret := SignalCliDriver{
 		log: log,
+		selfNr: selfNr,
 	}
 
 	ret.conn, err = jsonrpc2.Dial(
