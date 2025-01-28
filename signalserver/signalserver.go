@@ -2,17 +2,17 @@ package signalserver
 
 // signalbot
 // Copyright (C) 2024  Lukas Heindl
-// 
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-// 
+//
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-// 
+//
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -34,15 +34,17 @@ import (
 	"signalbot_go/modules/news"
 	"signalbot_go/modules/periodic"
 	"signalbot_go/modules/refectory"
+	"signalbot_go/modules/spotify"
 	"signalbot_go/modules/tv"
 	"signalbot_go/modules/weather"
 	"signalbot_go/signalcli"
+	signalconsole "signalbot_go/signalcli/drivers/console"
 	signaldbus "signalbot_go/signalcli/drivers/dbus"
 	signaljsonrpc "signalbot_go/signalcli/drivers/jsonrpc"
-	signalconsole "signalbot_go/signalcli/drivers/console"
 	"strings"
 
 	"log/slog"
+
 	"gopkg.in/yaml.v3"
 )
 
@@ -178,6 +180,11 @@ func NewSignalServer(log *slog.Logger, cfgDir string, dataDir string) (*SignalSe
 	if _, ok := cfg.Handlers["hugendubel"]; ok {
 		if s.modules["hugendubel"], err = hugendubel.NewHugendubel(log.With("module", "hugendubel"), filepath.Join(cfgDir, "hugendubel")); err != nil {
 			return nil, fmt.Errorf("'hugendubel' module: %v", err)
+		}
+	}
+	if _, ok := cfg.Handlers["spotify"]; ok {
+		if s.modules["spotify"], err = spotify.NewSpotify(log.With("module", "spotify"), filepath.Join(cfgDir, "spotify")); err != nil {
+			return nil, fmt.Errorf("'spotify' module: %v", err)
 		}
 	}
 
