@@ -44,6 +44,7 @@ type album struct {
 	CntSongs uint
 	Type     string
 	Artist   string
+	Release  string
 }
 
 func (b album) String() string {
@@ -58,6 +59,8 @@ func (b album) String() string {
 	builder.WriteString("] ")
 
 	builder.WriteString(b.Type)
+	builder.WriteString(" | ")
+	builder.WriteString(b.Release)
 
 	return builder.String()
 }
@@ -227,6 +230,7 @@ func (f *Fetcher) getStep(artistId string, jwt *accessToken, size int, out chan<
 				Title:    j.Name,
 				CntSongs: j.TotalTracks,
 				Type:     j.AlbumType,
+				Release:  j.ReleaseDate,
 			}
 			builder := strings.Builder{}
 			first := true
@@ -263,6 +267,7 @@ func (f *Fetcher) getReader(artistId string, jwt *accessToken, offset int, size 
 
 	v := url.Values{}
 	v.Set("market", "DE")
+	v.Set("include_groups", "album,single")
 	v.Set("offset", strconv.Itoa(offset))
 	v.Set("limit", strconv.Itoa(size))
 
