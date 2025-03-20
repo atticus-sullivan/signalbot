@@ -1,13 +1,16 @@
 [Unit]
 Description=signalbot_go
 After=signal-cli.service
+Requires=signal-cli.service
 
 [Service]
 Type=simple
 User=pi
 Group=users
+ExecStartPre=/bin/bash -c 'until [ -S /run/user/1000/signal-cli/socket ]; do sleep 10; done'
 ExecStart="/usr/local/bin/signalbot"
 Restart=always
+RestartSec=60
 
 [Install]
 WantedBy=multi-user.target
